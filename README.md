@@ -25,7 +25,7 @@ You can't use values from recent devices due them triggering hardware backed att
 
 - [How-To Guide - Info to help find build.prop files, then create and use a custom.pif.json](https://xdaforums.com/t/module-play-integrity-fix-safetynet-fix.4607985/post-89189572)
 - [gen_pif_custom.sh - Script to generate a custom.pif.json from device dump build.prop files](https://xdaforums.com/t/tools-zips-scripts-osm0sis-odds-and-ends-multiple-devices-platforms.2239421/post-89173470)
-- [UI Workflow for building / editing / testing pif.json from your PC](https://xdaforums.com/t/module-play-integrity-fix-safetynet-fix.4607985/post-89189970)
+- [PixelFlash - Application to build, edit or test pif.json from your PC](https://xdaforums.com/t/module-play-integrity-fix-safetynet-fix.4607985/post-89189970)
 
 </details>
 
