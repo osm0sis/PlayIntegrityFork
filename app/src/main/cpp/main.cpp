@@ -1,3 +1,4 @@
+//SUGGESTION!
 #include <android/log.h>
 #include <sys/system_properties.h>
 #include <unistd.h>
