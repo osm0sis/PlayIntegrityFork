@@ -15,7 +15,12 @@ import java.util.Enumeration;
 import java.util.Locale;
 
 public final class CustomKeyStoreSpi extends KeyStoreSpi {
-    public static volatile KeyStoreSpi keyStoreSpi;
+    // Make the keyStoreSpi variable final and assign it in the constructor
+    public final KeyStoreSpi keyStoreSpi;
+
+    public CustomKeyStoreSpi(KeyStoreSpi keyStoreSpi) {
+        this.keyStoreSpi = keyStoreSpi;
+    }
 
     @Override
     public Key engineGetKey(String alias, char[] password) throws NoSuchAlgorithmException, UnrecoverableKeyException {
@@ -23,12 +28,12 @@ public final class CustomKeyStoreSpi extends KeyStoreSpi {
     }
 
     @Override
-    public Certificate[] engineGetCertificateChain(String alias) {
-        for (StackTraceElement e : Thread.currentThread().getStackTrace()) {
-            if (e.getClassName().toLowerCase(Locale.ROOT).contains("droidguard")) {
-                EntryPoint.LOG("DroidGuard detected!");
-                throw new UnsupportedOperationException();
-            }
+    public Certificate[] engineGetCertificateChain(String alias) throws KeyStoreException {
+        // Use a helper method to check if DroidGuard is in the stack trace
+        if (isDroidGuardInStackTrace()) {
+            EntryPoint.LOG("DroidGuard detected!");
+            // Throw a more appropriate exception type
+            throw new KeyStoreException("DroidGuard detected!");
         }
         return keyStoreSpi.engineGetCertificateChain(alias);
     }
@@ -101,5 +106,14 @@ public final class CustomKeyStoreSpi extends KeyStoreSpi {
     @Override
     public void engineLoad(InputStream stream, char[] password) throws CertificateException, IOException, NoSuchAlgorithmException {
         keyStoreSpi.engineLoad(stream, password);
+    }
+    
+    private boolean isDroidGuardInStackTrace() {
+        for (StackTraceElement e : Thread.currentThread().getStackTrace()) {
+            if (e.getClassName().toLowerCase(Locale.ROOT).contains("droidguard")) {
+                return true;
+            }
+        }
+        return false;
     }
 }
