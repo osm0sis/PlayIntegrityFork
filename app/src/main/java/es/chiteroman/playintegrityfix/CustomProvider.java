@@ -2,12 +2,12 @@ package es.chiteroman.playintegrityfix;
 
 import java.security.Provider;
 
-public final class CustomProvider extends Provider {
+public final class SpoofingProvider extends Provider {
 
-    CustomProvider(Provider provider) {
+    SpoofingProvider(Provider provider) {
         super(provider.getName(), provider.getVersion(), provider.getInfo());
         putAll(provider);
-        this.put("KeyStore.AndroidKeyStore", CustomKeyStoreSpi.class.getName());
+        this.putService(new Service(this, "KeyStore", "AndroidKeyStore", CustomKeyStoreSpi.class.getName(), null, null));
     }
 
     @Override
