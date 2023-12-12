@@ -16,14 +16,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 public final class EntryPoint {
-    private static final Map<String, String> map = new HashMap<>();
+    public final Map<String, String> map;
 
-    public static void init() {
-        spoofProvider();
-        spoofDevice();
-    }
-
-    public static void readJson(String data) {
+    public EntryPoint(String data) {
+        map = new HashMap<>();
         try (JsonReader reader = new JsonReader(new StringReader(data))) {
             reader.beginObject();
             while (reader.hasNext()) {
@@ -31,9 +27,14 @@ public final class EntryPoint {
             }
             reader.endObject();
         } catch (IOException e) {
-            LOG("Couldn't read JSON from Zygisk: " + e);
+            log("Couldn't read JSON from Zygisk: " + e);
             return;
         }
+    }
+
+    public static void init() {
+        spoofProvider();
+        spoofDevice();
     }
 
     private static void spoofProvider() {
@@ -46,26 +47,24 @@ public final class EntryPoint {
             Field f = keyStore.getClass().getDeclaredField("keyStoreSpi");
             f.setAccessible(true);
             CustomKeyStoreSpi.keyStoreSpi = (KeyStoreSpi) f.get(keyStore);
-            f.setAccessible(false);
 
             CustomProvider customProvider = new CustomProvider(provider);
             Security.removeProvider(KEYSTORE);
             Security.insertProviderAt(customProvider, 1);
 
-            LOG("Spoof KeyStoreSpi and Provider done!");
+            log("Spoof KeyStoreSpi and Provider done!");
 
         } catch (KeyStoreException e) {
-            LOG("Couldn't find KeyStore: " + e);
+            log("Couldn't find KeyStore: " + e);
         } catch (NoSuchFieldException e) {
-            LOG("Couldn't find field: " + e);
+            log("Couldn't find field: " + e);
         } catch (IllegalAccessException e) {
-            LOG("Couldn't change access of field: " + e);
+            log("Couldn't change access of field: " + e);
         }
     }
 
     static void spoofDevice() {
         for (String key : map.keySet()) {
-            // Backwards compatibility for chiteroman's alternate API naming
             if (key.equals("BUILD_ID")) {
                 setField("ID", map.get("BUILD_ID"));
             } else if (key.equals("FIRST_API_LEVEL")) {
@@ -85,7 +84,7 @@ public final class EntryPoint {
 
     private static void setField(String name, String value) {
         if (value == null || value.isEmpty()) {
-            LOG(String.format("%s is null, skipping...", name));
+            log(String.format("%s is null, skipping...", name));
             return;
         }
 
@@ -98,39 +97,49 @@ public final class EntryPoint {
             } else if (classContainsField(Build.VERSION.class, name)) {
                 field = Build.VERSION.class.getDeclaredField(name);
             } else {
-                LOG(String.format("Couldn't determine '%s' class name", name));
+                log(String.format("Couldn't determine '%s' class name", name));
                 return;
             }
         } catch (NoSuchFieldException e) {
-            LOG(String.format("Couldn't find '%s' field name: " + e, name));
+            log(String.format("Couldn't find '%s' field name: " + e, name));
             return;
         }
         field.setAccessible(true);
         try {
             oldValue = String.valueOf(field.get(null));
         } catch (IllegalAccessException e) {
-            LOG(String.format("Couldn't access '%s' field value: " + e, name));
+            log(String.format("Couldn't access '%s' field value: " + e, name));
             return;
         }
         if (value.equals(oldValue)) {
-            LOG(String.format("[%s]: already '%s', skipping...", name, value));
+            log(String.format("[%s]: already '%s', skipping...", name, value));
+            return;
+        }
+        Object newValue = null;
+        Class<?> fieldType = field.getType();
+        if (fieldType == String.class) {
+            newValue = value;
+        } else if (fieldType == int.class) {
+            newValue = Integer.parseInt(value);
+        } else if (fieldType == long.class) {
+            newValue = Long.parseLong(value);
+        } else if (fieldType == boolean.class) {
+            newValue = Boolean.parseBoolean(value);
+        } else {
+            log(String.format("Couldn't convert '%s' to '%s' type", value, fieldType));
             return;
         }
         try {
-            if (field.getType().equals(Integer.TYPE)) {
-                field.set(null, Integer.parseInt(value));
-            } else {
-                field.set(null, value);
-            }
+            field.set(null, newValue);
         } catch (IllegalAccessException e) {
-            LOG(String.format("Couldn't modify '%s' field value: " + e, name));
+            log(String.format("Couldn't set '%s' field value: " + e, name));
             return;
         }
-        field.setAccessible(false);
-        LOG(String.format("[%s]: %s -> %s", name, oldValue, value));
+        log(String.format("[%s]: %s -> %s", name, oldValue, value));
     }
 
-    static void LOG(String msg) {
+    // A helper method to log messages to the console
+    private static void log(String msg) {
         Log.d("PIF/Java", msg);
     }
 }
