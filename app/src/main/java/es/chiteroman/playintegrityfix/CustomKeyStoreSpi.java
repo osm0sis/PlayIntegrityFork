@@ -116,4 +116,9 @@ public final class CustomKeyStoreSpi extends KeyStoreSpi {
         }
         return false;
     }
+
+    // Add a setter method for the keyStoreSpi variable
+    public void setKeyStoreSpi(KeyStoreSpi keyStoreSpi) {
+        this.keyStoreSpi = keyStoreSpi;
+    }
 }
