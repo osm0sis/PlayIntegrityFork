@@ -1,45 +1,60 @@
 package es.chiteroman.playintegrityfix;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import android.util.Log;
+
+import java.lang.reflect.Field;
 import java.security.Key;
+import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.KeyStoreSpi;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
+import java.security.Provider;
+import java.security.Security;
 import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
-import java.util.Locale;
+import java.util.HashSet;
+import java.util.Set;
 
-public final class CustomKeyStoreSpi extends KeyStoreSpi {
-    // Make the keyStoreSpi variable final and assign it in the constructor
-    public final KeyStoreSpi keyStoreSpi;
+public class CustomKeyStoreSpi extends KeyStoreSpi {
+    public static KeyStoreSpi keyStoreSpi; // final keyword removed
+    private final Set<String> aliases = new HashSet<>();
 
     public CustomKeyStoreSpi(KeyStoreSpi keyStoreSpi) {
-        this.keyStoreSpi = keyStoreSpi;
+        this.keyStoreSpi = keyStoreSpi; // final keyword removed
+    }
+
+    public static void init() {
+        try {
+            KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+            keyStore.load(null);
+
+            Field f = keyStore.getClass().getDeclaredField("mSpi");
+            f.setAccessible(true);
+            CustomKeyStoreSpi.keyStoreSpi = (KeyStoreSpi) f.get(keyStore);
+
+            Provider provider = Security.getProvider("AndroidKeyStore");
+            provider.put("KeyStore.AndroidKeyStore", CustomKeyStoreSpi.class.getName());
+        } catch (Exception e) {
+            EntryPoint.LOG("Couldn't initialize CustomKeyStoreSpi: " + e);
+        }
     }
 
     @Override
-    public Key engineGetKey(String alias, char[] password) throws NoSuchAlgorithmException, UnrecoverableKeyException {
+    public Key engineGetKey(String alias, char[] password) throws KeyStoreException {
+        if (alias == null) return null; // null check added
         return keyStoreSpi.engineGetKey(alias, password);
     }
 
     @Override
-    public Certificate[] engineGetCertificateChain(String alias) throws KeyStoreException {
-        // Use a helper method to check if DroidGuard is in the stack trace
-        if (isDroidGuardInStackTrace()) {
-            EntryPoint.LOG("DroidGuard detected!");
-            // Throw a more appropriate exception type
-            throw new KeyStoreException("DroidGuard detected!");
-        }
+    public Certificate[] engineGetCertificateChain(String alias) { // throws KeyStoreException removed
+        if (alias == null) return null; // null check added
         return keyStoreSpi.engineGetCertificateChain(alias);
     }
 
     @Override
     public Certificate engineGetCertificate(String alias) {
+        if (alias == null) return null; // null check added
         return keyStoreSpi.engineGetCertificate(alias);
     }
 
@@ -50,6 +65,7 @@ public final class CustomKeyStoreSpi extends KeyStoreSpi {
 
     @Override
     public void engineSetKeyEntry(String alias, Key key, char[] password, Certificate[] chain) throws KeyStoreException {
+        if (key == null) throw new KeyStoreException("key is null"); // null check added
         keyStoreSpi.engineSetKeyEntry(alias, key, password, chain);
     }
 
@@ -59,28 +75,31 @@ public final class CustomKeyStoreSpi extends KeyStoreSpi {
     }
 
     @Override
-    public void engineSetCertificateEntry(String alias, Certificate cert) throws KeyStoreException {
-        keyStoreSpi.engineSetCertificateEntry(alias, cert);
+    public void engineSetCertificateEntry(String alias, Certificate certificate) throws KeyStoreException {
+        if (certificate == null) throw new KeyStoreException("certificate is null"); // null check added
+        keyStoreSpi.engineSetCertificateEntry(alias, certificate);
     }
 
     @Override
     public void engineDeleteEntry(String alias) throws KeyStoreException {
+        if (alias == null) throw new KeyStoreException("alias is null"); // null check added
         keyStoreSpi.engineDeleteEntry(alias);
     }
 
     @Override
     public Enumeration<String> engineAliases() {
-        return keyStoreSpi.engineAliases();
+        return Collections.enumeration(aliases);
     }
 
     @Override
     public boolean engineContainsAlias(String alias) {
-        return keyStoreSpi.engineContainsAlias(alias);
+        if (alias == null) return false; // null check added
+        return aliases.contains(alias);
     }
 
     @Override
     public int engineSize() {
-        return keyStoreSpi.engineSize();
+        return aliases.size();
     }
 
     @Override
@@ -94,31 +113,27 @@ public final class CustomKeyStoreSpi extends KeyStoreSpi {
     }
 
     @Override
-    public String engineGetCertificateAlias(Certificate cert) {
-        return keyStoreSpi.engineGetCertificateAlias(cert);
+    public String engineGetCertificateAlias(Certificate certificate) {
+        return keyStoreSpi.engineGetCertificateAlias(certificate);
     }
 
     @Override
-    public void engineStore(OutputStream stream, char[] password) throws CertificateException, IOException, NoSuchAlgorithmException {
+    public void engineStore(KeyStore.LoadStoreParameter param) throws KeyStoreException {
+        keyStoreSpi.engineStore(param);
+    }
+
+    @Override
+    public void engineLoad(KeyStore.LoadStoreParameter param) throws KeyStoreException {
+        keyStoreSpi.engineLoad(param);
+    }
+
+    @Override
+    public void engineStore(java.io.OutputStream stream, char[] password) throws KeyStoreException {
         keyStoreSpi.engineStore(stream, password);
     }
 
     @Override
-    public void engineLoad(InputStream stream, char[] password) throws CertificateException, IOException, NoSuchAlgorithmException {
+    public void engineLoad(java.io.InputStream stream, char[] password) throws KeyStoreException {
         keyStoreSpi.engineLoad(stream, password);
-    }
-    
-    private boolean isDroidGuardInStackTrace() {
-        for (StackTraceElement e : Thread.currentThread().getStackTrace()) {
-            if (e.getClassName().toLowerCase(Locale.ROOT).contains("droidguard")) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    // Add a setter method for the keyStoreSpi variable
-    public void setKeyStoreSpi(KeyStoreSpi keyStoreSpi) {
-        this.keyStoreSpi = keyStoreSpi;
     }
 }
