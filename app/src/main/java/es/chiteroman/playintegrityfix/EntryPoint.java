@@ -14,7 +14,6 @@ import java.security.Provider;
 import java.security.Security;
 import java.util.HashMap;
 import java.util.Map;
-import static es.chiteroman.playintegrityfix.SomeOtherClass.LOG;
 
 public final class EntryPoint {
     public final Map<String, String> map;
