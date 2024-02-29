@@ -2,8 +2,13 @@ import React from "react";
 import { Anchor, Page, Tabbar } from "@mmrl/ui";
 import { ConfigProvider } from "@mmrl/providers";
 
+const defConfig = include("util/defConfig.js");
 const RenderToolbar = include("components/RenderToolbar.jsx");
 const CenterBox = include("components/CenterBox.jsx");
+
+const GeneralTab = include("tabs/GeneralTab.jsx");
+const ChangelogTab = include("tabs/ChangelogTab.jsx");
+const MoreTab = include("tabs/MoreTab.jsx");
 
 function App() {
   const [index, setIndex] = React.useState(0);
@@ -39,7 +44,7 @@ function App() {
   );
 }
 
-const zygiskNext = new SuFile("/sdata/adb/modules/zygisksu/module.prop");
+const zygiskNext = new SuFile("/data/adb/modules/zygisksu/module.prop");
 export default () => {
   if (BuildConfig.VERSION_CODE < 21410) {
     return (
