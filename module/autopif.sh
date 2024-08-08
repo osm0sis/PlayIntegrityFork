@@ -110,7 +110,9 @@ if [ "$DIR" = /data/adb/modules/playintegrityfix/autopif ]; then
   cp -fv $NEWNAME ..;
 fi;
 
-if [ -f /data/adb/modules/playintegrityfix/killgms.sh ]; then
-  item "Killing any running GMS DroidGuard process ...";
-  sh /data/adb/modules/playintegrityfix/killgms.sh 2>&1;
+if [ "$DIR" = /data/adb/modules/playintegrityfix/autopif ]; then
+  if [ -f /data/adb/modules/playintegrityfix/killgms.sh ]; then
+    item "Killing any running GMS DroidGuard process ...";
+    sh /data/adb/modules/playintegrityfix/killgms.sh 2>&1;
+  fi;
 fi;
