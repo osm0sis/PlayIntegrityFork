@@ -25,4 +25,11 @@
     "*.build.id": "",        // for ro.build.id
     "*.security_patch": "",  // for ro.build.version.security_patch
     "*api_level": ""         // for ro.board.api_level, ro.board.first_api_level, ro.product.first_api_level and ro.vendor.api_level
+
+  // Advanced Settings: Generated when migration script is used, can be inserted manually.
+    "spoofBuild": "1", // Controls spoofing Build Fields. Default 1. Leave at 1 if using TrickyStore.
+    "spoofProps": "1", // Controls spoofing System Properties. Default 1. Set to 0 if using TrickyStore.
+    "spoofProvider": "1", // Controls spoofing Keystore Provider. Default 1. Set to 0 if using TrickyStore.
+    "spoofSignature": "0", // Controls spoofing ROM signature. Default 0. Use with custom ROM.
+    "verboseLogs": "0" // Controls logging. Default 0. Select logging level as desired: 1, 2, 3, 100.
 }
