@@ -21,6 +21,8 @@ if ! which wget >/dev/null || grep -q "wget-curl" $(which wget); then
     wget() { /data/adb/ksu/bin/busybox wget "$@"; }
   elif [ -f /data/adb/ap/bin/busybox ]; then
     wget() { /data/adb/ap/bin/busybox wget "$@"; }
+  elif [ -f /system/bin/busybox ]; then
+    wget() { /system/bin/busybox wget "$@"; }
   else
     echo "Error: wget not found, install busybox!";
     exit 1;
