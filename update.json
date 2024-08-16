@@ -1,6 +1,6 @@
 {
     "version": "v10",
-    "versionCode": 101000,
+    "versionCode": 102000,
     "zipUrl": "https://github.com/osm0sis/PlayIntegrityFork/releases/download/v10/PlayIntegrityFork-v10.zip",
     "changelog": "https://raw.githubusercontent.com/osm0sis/PlayIntegrityFork/main/CHANGELOG.md"
 }
