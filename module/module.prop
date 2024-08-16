@@ -1,7 +1,7 @@
 id=playintegrityfix
 name=Play Integrity Fork
 version=v10
-versionCode=101000
+versionCode=102000
 author=osm0sis & chiteroman @ xda-developers
 description=Fix ctsProfile (SafetyNet) and DEVICE (Play Integrity) verdicts
 updateJson=https://raw.githubusercontent.com/osm0sis/PlayIntegrityFork/main/update.json
