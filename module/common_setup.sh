@@ -69,4 +69,6 @@ fi
 # Work around supported custom ROM PixelPropsUtils conflict when spoofProvider is disabled
 if [ -n "$(resetprop persist.sys.pixelprops.pi)" ]; then
     resetprop -n -p persist.sys.pixelprops.pi false
+    resetprop -n -p persist.sys.pixelprops.gapps false
+    resetprop -n -p persist.sys.pixelprops.gms false
 fi
