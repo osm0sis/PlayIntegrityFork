@@ -1,1 +1,2 @@
-
+com.android.google.gms.unstable
+com.whatsapp
