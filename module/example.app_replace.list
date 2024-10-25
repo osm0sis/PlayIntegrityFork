@@ -11,7 +11,9 @@
 /system/app/EliteDevelopmentModule
 /system/app/XInjectModule
 
-# hentaiOS
+# helluvaOS / hentaiOS
+/system_ext/app/helluvaProductDevice*
+/system_ext/app/helluvaProductSecretStub
 /system_ext/app/hentaiLewdbSVTDummy
 
 # Evolution X
