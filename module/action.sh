@@ -8,7 +8,7 @@ sh $MODPATH/autopif2.sh || exit 1
 
 echo -e "\nDone!"
 
-# warn since Magisk's implementation automatically closes if successful
+# warn since Magisk/KernelSU's implementation automatically closes if successful
 if [ "$APATCH" != "true" ]; then
     echo -e "\nClosing dialog in 20 seconds ..."
     sleep 20
