@@ -84,18 +84,21 @@ MODEL_LIST="$(grep -A1 'tr id=' PIXEL_OTA_HTML | grep 'td' | sed 's;.*<td>\(.*\)
 PRODUCT_LIST="$(grep -o 'ota/.*_beta' PIXEL_OTA_HTML | cut -d\/ -f2)";
 OTA_LIST="$(grep 'ota/.*_beta' PIXEL_OTA_HTML | cut -d\" -f2)";
 
-case "$1" in
-  -m)
-    DEVICE="$(getprop ro.product.device)";
-    case "$PRODUCT_LIST" in
-      *${DEVICE}_beta*)
-        MODEL="$(getprop ro.product.model)";
-        PRODUCT="${DEVICE}_beta";
-        OTA="$(echo "$OTA_LIST" | grep "$PRODUCT")";
-      ;;
-    esac;
-  ;;
-esac;
+DEVICE="$(getprop ro.product.device)";
+if [ "$1" = "-m" ]; then
+  DEVICE="$2";
+fi;
+
+if echo "$PRODUCT_LIST" | grep -q "${DEVICE}_beta"; then
+  case "$PRODUCT_LIST" in
+    *${DEVICE}_beta*)
+      MODEL="$(getprop ro.product.model)";
+      PRODUCT="${DEVICE}_beta";
+      OTA="$(echo "$OTA_LIST" | grep "$PRODUCT")";
+    ;;
+  esac;
+fi;
+
 item "Selecting Pixel Beta device ...";
 if [ -z "$PRODUCT" ]; then
   set_random_beta() {
