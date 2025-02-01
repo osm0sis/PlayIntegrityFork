@@ -265,6 +265,6 @@ public final class EntryPoint {
     }
 
     static void LOG(String msg) {
-        Log.d("PIF/Java", msg);
+        Log.d("PIF/Java:DG", msg);
     }
 }

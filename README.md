@@ -56,13 +56,13 @@ A migration may also be performed manually with `sh migrate.sh` and custom.pif.j
 
 You can customize the included default [example.app_replace.list](https://raw.githubusercontent.com/osm0sis/PlayIntegrityFork/main/module/example.app_replace.list) from the module directory (/data/adb/modules/playintegrityfix) then rename it to custom.app_replace.list to systemlessly replace any additional conflicting custom ROM spoof injection app paths to disable them.
 
-## About 'autopif2.sh' and 'killgms.sh' script files
+## About 'autopif2.sh' and 'killpi.sh' script files
 
 There's intentionally no pif.json in the module because the goal remains to be futureproof, and including something that may be banned and obsolete within days would be contrary to that goal. If you don't care to have your own private fingerprint to use or don't have time to look for one currently then simply run the generation script from a root manager app that supports the module Action button, a root prompt with `sh autopif2.sh` in the module directory (/data/adb/modules/playintegrityfix), or from a file explorer app that supports script execution.
 
 The autopif2 script generates a random device fingerprint from the latest Pixel Beta, ideally only to test an initial setup, since they expire roughly every 6 weeks from the Pixel Beta release date (dates included in the generated fingerprint), and the public mass-used ones from other modules or ROMs may also get banned or may be banned for RCS use while otherwise passing Play Integrity and SafetyNet in that time.
 
-The killgms script forces the Google Play Services DroidGuard process (com.google.android.gms.unstable) to end, making it restart with the next attestation attempt; useful for testing out different fingerprints without requiring a reboot in between.
+The killpi script forces the Google Play Services DroidGuard (com.google.android.gms.unstable) and Play Store (com.android.vending) processes to end, making them restart with the next attestation attempt; useful for testing out different fingerprints without requiring a reboot in between.
 
 ## Troubleshooting
 

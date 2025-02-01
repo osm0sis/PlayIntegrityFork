@@ -158,7 +158,7 @@ if [ -f "$MIGRATE" ]; then
   if [ -n "$ARGS" ]; then
     grep_json() { [ -f "$2" ] && grep -m1 "$1" $2 | cut -d\" -f4; }
     verboseLogs=$(grep_json "VERBOSE_LOGS" $OLDJSON);
-    ADVSETTINGS="spoofBuild spoofProps spoofProvider spoofSignature verboseLogs";
+    ADVSETTINGS="spoofBuild spoofProps spoofProvider spoofSignature spoofVendingSdk verboseLogs";
     for SETTING in $ADVSETTINGS; do
       eval [ -z \"\$$SETTING\" ] \&\& $SETTING=$(grep_json "$SETTING" $OLDJSON);
       eval TMPVAL=\$$SETTING;
@@ -182,8 +182,8 @@ if [ "$DIR" = /data/adb/modules/playintegrityfix/autopif2 ]; then
   fi;
   item "Installing new json ...";
   cp -fv $NEWNAME ..;
-  if [ -f /data/adb/modules/playintegrityfix/killgms.sh ]; then
-    item "Killing any running GMS DroidGuard process ...";
-    sh /data/adb/modules/playintegrityfix/killgms.sh 2>&1 || true;
+  if [ -f /data/adb/modules/playintegrityfix/killpi.sh ]; then
+    item "Killing any running GMS DroidGuard/Play Store processes ...";
+    sh /data/adb/modules/playintegrityfix/killpi.sh 2>&1 || true;
   fi;
 fi;
