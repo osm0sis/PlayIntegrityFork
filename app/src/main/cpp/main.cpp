@@ -12,12 +12,14 @@
 
 #define JSON_FILE_PATH "/data/adb/modules/playintegrityfix/pif.json"
 #define CUSTOM_JSON_FILE_PATH "/data/adb/modules/playintegrityfix/custom.pif.json"
+#define VENDING_PACKAGE "com.android.vending"
 
 static int verboseLogs = 0;
 static int spoofBuild = 1;
 static int spoofProps = 1;
 static int spoofProvider = 1;
 static int spoofSignature = 0;
+static int spoofVendingSdk = 0;
 
 static std::map<std::string, std::string> jsonProps;
 
@@ -95,11 +97,11 @@ public:
             return;
         }
 
-        std::string_view process(rawProcess);
+        pkgName = rawProcess;
         std::string_view dir(rawDir);
 
-        isGms = dir.ends_with("/com.google.android.gms");
-        isGmsUnstable = process == "com.google.android.gms.unstable";
+        isGms = dir.ends_with("/com.google.android.gms") || dir.ends_with("/com.android.vending");
+        isGmsUnstable = pkgName == "com.google.android.gms.unstable" || pkgName == VENDING_PACKAGE;
 
         env->ReleaseStringUTFChars(args->nice_name, rawProcess);
         env->ReleaseStringUTFChars(args->app_data_dir, rawDir);
@@ -161,6 +163,10 @@ public:
         if (dexVector.empty() || json.empty()) return;
 
         readJson();
+
+        if (pkgName == VENDING_PACKAGE) spoofProps = spoofBuild = spoofProvider = 0;
+        else spoofVendingSdk = 0;
+
         if (spoofProps > 0) doHook();
         inject();
 
@@ -177,6 +183,7 @@ private:
     JNIEnv *env = nullptr;
     std::vector<char> dexVector;
     nlohmann::json json;
+    std::string pkgName;
 
     void readJson() {
         LOGD("JSON contains %d keys!", static_cast<int>(json.size()));
@@ -193,6 +200,19 @@ private:
         }
 
         // Advanced spoofing settings
+        if (json.contains("spoofVendingSdk")) {
+            if (!json["spoofVendingSdk"].is_null() && json["spoofVendingSdk"].is_string() && json["spoofVendingSdk"] != "") {
+                spoofVendingSdk = stoi(json["spoofVendingSdk"].get<std::string>());
+                if (verboseLogs > 0) LOGD("Spoofing SDK Level in Play Store %s!", (spoofVendingSdk > 0) ? "enabled" : "disabled");
+            } else {
+                LOGD("Error parsing spoofVendingSdk!");
+            }
+            json.erase("spoofVendingSdk");
+        }
+        if (pkgName == VENDING_PACKAGE) {
+            json.clear();
+            return;
+        }
         if (json.contains("spoofBuild")) {
             if (!json["spoofBuild"].is_null() && json["spoofBuild"].is_string() && json["spoofBuild"] != "") {
                 spoofBuild = stoi(json["spoofBuild"].get<std::string>());
@@ -255,32 +275,39 @@ private:
     }
 
     void inject() {
-        LOGD("JNI: Getting system classloader");
+        LOGD("JNI %s: Getting system classloader", pkgName.c_str());
         auto clClass = env->FindClass("java/lang/ClassLoader");
         auto getSystemClassLoader = env->GetStaticMethodID(clClass, "getSystemClassLoader", "()Ljava/lang/ClassLoader;");
         auto systemClassLoader = env->CallStaticObjectMethod(clClass, getSystemClassLoader);
 
-        LOGD("JNI: Creating module classloader");
+        LOGD("JNI %s: Creating module classloader", pkgName.c_str());
         auto dexClClass = env->FindClass("dalvik/system/InMemoryDexClassLoader");
         auto dexClInit = env->GetMethodID(dexClClass, "<init>", "(Ljava/nio/ByteBuffer;Ljava/lang/ClassLoader;)V");
         auto buffer = env->NewDirectByteBuffer(dexVector.data(), static_cast<jlong>(dexVector.size()));
         auto dexCl = env->NewObject(dexClClass, dexClInit, buffer, systemClassLoader);
 
-        LOGD("JNI: Loading module class");
+        LOGD("JNI %s: Loading module class", pkgName.c_str());
         auto loadClass = env->GetMethodID(clClass, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
-        auto entryClassName = env->NewStringUTF("es.chiteroman.playintegrityfix.EntryPoint");
+        const char* className = pkgName == VENDING_PACKAGE ? "es.chiteroman.playintegrityfix.EntryPointVending" : "es.chiteroman.playintegrityfix.EntryPoint";
+        auto entryClassName = env->NewStringUTF(className);
         auto entryClassObj = env->CallObjectMethod(dexCl, loadClass, entryClassName);
 
         auto entryClass = (jclass) entryClassObj;
 
-        LOGD("JNI: Sending JSON");
-        auto receiveJson = env->GetStaticMethodID(entryClass, "receiveJson", "(Ljava/lang/String;)V");
-        auto javaStr = env->NewStringUTF(json.dump().c_str());
-        env->CallStaticVoidMethod(entryClass, receiveJson, javaStr);
+        if (pkgName == VENDING_PACKAGE) {
+            LOGD("JNI %s: Calling EntryPointVending.init", pkgName.c_str());
+            auto entryInit = env->GetStaticMethodID(entryClass, "init", "(II)V");
+            env->CallStaticVoidMethod(entryClass, entryInit, verboseLogs, spoofVendingSdk);
+        } else {
+            LOGD("JNI %s: Sending JSON", pkgName.c_str());
+            auto receiveJson = env->GetStaticMethodID(entryClass, "receiveJson", "(Ljava/lang/String;)V");
+            auto javaStr = env->NewStringUTF(json.dump().c_str());
+            env->CallStaticVoidMethod(entryClass, receiveJson, javaStr);
 
-        LOGD("JNI: Calling init");
-        auto entryInit = env->GetStaticMethodID(entryClass, "init", "(IIII)V");
-        env->CallStaticVoidMethod(entryClass, entryInit, verboseLogs, spoofBuild, spoofProvider, spoofSignature);
+            LOGD("JNI %s: Calling EntryPoint.init", pkgName.c_str());
+            auto entryInit = env->GetStaticMethodID(entryClass, "init", "(IIII)V");
+            env->CallStaticVoidMethod(entryClass, entryInit, verboseLogs, spoofBuild, spoofProvider, spoofSignature);
+        }
     }
 };
 
