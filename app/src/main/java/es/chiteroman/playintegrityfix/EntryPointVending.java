@@ -23,6 +23,7 @@ public final class EntryPointVending {
             oldValue = field.getInt(null);
             if (oldValue == targetSdk) {
                 if (verboseLogs > 2) LOG(String.format("[SDK_INT]: %d (unchanged)", oldValue));
+                field.setAccessible(false);
                 return;
             }
             field.set(null, targetSdk);

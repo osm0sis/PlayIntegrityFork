@@ -13,6 +13,7 @@
 #define JSON_FILE_PATH "/data/adb/modules/playintegrityfix/pif.json"
 #define CUSTOM_JSON_FILE_PATH "/data/adb/modules/playintegrityfix/custom.pif.json"
 #define VENDING_PACKAGE "com.android.vending"
+#define DROIDGUARD_PACKAGE "com.google.android.gms.unstable"
 
 static int verboseLogs = 0;
 static int spoofBuild = 1;
@@ -85,7 +86,7 @@ public:
     }
 
     void preAppSpecialize(zygisk::AppSpecializeArgs *args) override {
-        bool isGms = false, isGmsUnstable = false;
+        bool isGms = false, isDroidGuardOrVending = false;
 
         auto rawProcess = env->GetStringUTFChars(args->nice_name, nullptr);
         auto rawDir = env->GetStringUTFChars(args->app_data_dir, nullptr);
@@ -101,7 +102,7 @@ public:
         std::string_view dir(rawDir);
 
         isGms = dir.ends_with("/com.google.android.gms") || dir.ends_with("/com.android.vending");
-        isGmsUnstable = pkgName == "com.google.android.gms.unstable" || pkgName == VENDING_PACKAGE;
+        isDroidGuardOrVending = pkgName == DROIDGUARD_PACKAGE || pkgName == VENDING_PACKAGE;
 
         env->ReleaseStringUTFChars(args->nice_name, rawProcess);
         env->ReleaseStringUTFChars(args->app_data_dir, rawDir);
@@ -114,7 +115,7 @@ public:
         // We are in GMS now, force unmount
         api->setOption(zygisk::FORCE_DENYLIST_UNMOUNT);
 
-        if (!isGmsUnstable) {
+        if (!isDroidGuardOrVending) {
             api->setOption(zygisk::DLCLOSE_MODULE_LIBRARY);
             return;
         }
@@ -164,11 +165,13 @@ public:
 
         readJson();
 
-        if (pkgName == VENDING_PACKAGE) spoofProps = spoofBuild = spoofProvider = 0;
+        if (pkgName == VENDING_PACKAGE) spoofProps = spoofBuild = spoofProvider = spoofSignature = 0;
         else spoofVendingSdk = 0;
 
         if (spoofProps > 0) doHook();
-        inject();
+        if (spoofBuild + spoofProvider + spoofSignature + spoofVendingSdk > 0 ||
+            pkgName == DROIDGUARD_PACKAGE && verboseLogs > 99)
+            inject();
 
         dexVector.clear();
         json.clear();
