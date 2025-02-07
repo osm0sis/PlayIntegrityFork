@@ -169,9 +169,7 @@ public:
         else spoofVendingSdk = 0;
 
         if (spoofProps > 0) doHook();
-        if (spoofBuild + spoofProvider + spoofSignature + spoofVendingSdk > 0 ||
-            pkgName == DROIDGUARD_PACKAGE && verboseLogs > 99)
-            inject();
+        if (spoofBuild + spoofProvider + spoofSignature + spoofVendingSdk > 0) inject();
 
         dexVector.clear();
         json.clear();
@@ -278,18 +276,20 @@ private:
     }
 
     void inject() {
-        LOGD("JNI %s: Getting system classloader", pkgName.c_str());
+        const char* niceName = pkgName == VENDING_PACKAGE ? "PS" : "DG";
+
+        LOGD("JNI %s: Getting system classloader", niceName);
         auto clClass = env->FindClass("java/lang/ClassLoader");
         auto getSystemClassLoader = env->GetStaticMethodID(clClass, "getSystemClassLoader", "()Ljava/lang/ClassLoader;");
         auto systemClassLoader = env->CallStaticObjectMethod(clClass, getSystemClassLoader);
 
-        LOGD("JNI %s: Creating module classloader", pkgName.c_str());
+        LOGD("JNI %s: Creating module classloader", niceName);
         auto dexClClass = env->FindClass("dalvik/system/InMemoryDexClassLoader");
         auto dexClInit = env->GetMethodID(dexClClass, "<init>", "(Ljava/nio/ByteBuffer;Ljava/lang/ClassLoader;)V");
         auto buffer = env->NewDirectByteBuffer(dexVector.data(), static_cast<jlong>(dexVector.size()));
         auto dexCl = env->NewObject(dexClClass, dexClInit, buffer, systemClassLoader);
 
-        LOGD("JNI %s: Loading module class", pkgName.c_str());
+        LOGD("JNI %s: Loading module class", niceName);
         auto loadClass = env->GetMethodID(clClass, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
         const char* className = pkgName == VENDING_PACKAGE ? "es.chiteroman.playintegrityfix.EntryPointVending" : "es.chiteroman.playintegrityfix.EntryPoint";
         auto entryClassName = env->NewStringUTF(className);
@@ -298,16 +298,16 @@ private:
         auto entryClass = (jclass) entryClassObj;
 
         if (pkgName == VENDING_PACKAGE) {
-            LOGD("JNI %s: Calling EntryPointVending.init", pkgName.c_str());
+            LOGD("JNI %s: Calling EntryPointVending.init", niceName);
             auto entryInit = env->GetStaticMethodID(entryClass, "init", "(II)V");
             env->CallStaticVoidMethod(entryClass, entryInit, verboseLogs, spoofVendingSdk);
         } else {
-            LOGD("JNI %s: Sending JSON", pkgName.c_str());
+            LOGD("JNI %s: Sending JSON", niceName);
             auto receiveJson = env->GetStaticMethodID(entryClass, "receiveJson", "(Ljava/lang/String;)V");
             auto javaStr = env->NewStringUTF(json.dump().c_str());
             env->CallStaticVoidMethod(entryClass, receiveJson, javaStr);
 
-            LOGD("JNI %s: Calling EntryPoint.init", pkgName.c_str());
+            LOGD("JNI %s: Calling EntryPoint.init", niceName);
             auto entryInit = env->GetStaticMethodID(entryClass, "init", "(IIII)V");
             env->CallStaticVoidMethod(entryClass, entryInit, verboseLogs, spoofBuild, spoofProvider, spoofSignature);
         }

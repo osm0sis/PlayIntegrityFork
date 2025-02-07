@@ -8,7 +8,7 @@ import android.util.Log;
 public final class EntryPointVending {
 
     private static void LOG(String msg) {
-        Log.d("PIF/Java:vending", msg);
+        Log.d("PIF/Java:PS", msg);
     }
 
     @SuppressLint("DefaultLocale")
