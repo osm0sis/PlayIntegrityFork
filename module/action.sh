@@ -4,7 +4,7 @@ MODPATH="${0%/*}"
 set +o standalone
 unset ASH_STANDALONE
 
-sh $MODPATH/autopif2.sh || exit 1
+sh $MODPATH/autopif2.sh --strong || exit 1
 
 echo -e "\nDone!"
 
