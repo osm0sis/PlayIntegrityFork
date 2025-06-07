@@ -8,12 +8,20 @@ delprop_if_exist() {
     [ -n "$(resetprop "$NAME")" ] && resetprop --delete "$NAME"
 }
 
-# persistprop <prop name> <value>
+# persistprop <prop name> <new value>
 persistprop() {
     local NAME="$1"
-    local VALUE="$2"
+    local NEWVALUE="$2"
+    local CURVALUE="$(resetprop "$NAME")"
 
-    resetprop -n -p "$NAME" "$VALUE"
+    if ! grep -q "$NAME" $MODPATH\uninstall.sh 2>/dev/null; then
+        if [ "$CURVALUE" ]; then
+             [ "$NEWVALUE" = "$CURVALUE" ] || echo "resetprop -n -p \"$NAME\" \"$CURVALUE\"" >> $MODPATH\uninstall.sh
+        else
+             echo "resetprop --delete \"$NAME\"" >> $MODPATH\uninstall.sh
+        fi
+    fi
+    resetprop -n -p "$NAME" "$NEWVALUE"
 }
 
 RESETPROP="resetprop -n"
