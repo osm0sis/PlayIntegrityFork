@@ -3,11 +3,14 @@ if [ -f /data/adb/modules/playintegrityfix/scripts-only-mode ]; then
     ui_print "! Installing global scripts only; Zygisk attestation fallback and device spoofing disabled"
     touch $MODPATH/scripts-only-mode
     sed -i 's/\(description=\)\(.*\)/\1[Scripts-only mode] \2/' $MODPATH/module.prop
+    [ -f /data/adb/modules/playintegrityfix/uninstall.sh ] && sh /data/adb/modules/playintegrityfix/uninstall.sh
     rm -rf $MODPATH/action.sh $MODPATH/autopif2.sh $MODPATH/classes.dex $MODPATH/common_setup.sh \
         $MODPATH/custom.pif.json $MODPATH/example.app_replace.list $MODPATH/example.pif.json \
         $MODPATH/migrate.sh $MODPATH/pif.json $MODPATH/zygisk \
         /data/adb/modules/playintegrityfix/custom.app_replace.list \
-        /data/adb/modules/playintegrityfix/custom.pif.json /data/adb/modules/playintegrityfix/system
+        /data/adb/modules/playintegrityfix/custom.pif.json \
+        /data/adb/modules/playintegrityfix/system \
+        /data/adb/modules/playintegrityfix/uninstall.sh
 fi
 
 # Copy any disabled app files to updated module
@@ -17,7 +20,7 @@ if [ -d /data/adb/modules/playintegrityfix/system ]; then
 fi
 
 # Copy any supported custom files to updated module
-for FILE in custom.app_replace.list custom.pif.json skipdelprop; do
+for FILE in custom.app_replace.list custom.pif.json skipdelprop uninstall.sh; do
     if [ -f "/data/adb/modules/playintegrityfix/$FILE" ]; then
         ui_print "- Restoring $FILE"
         cp -af /data/adb/modules/playintegrityfix/$FILE $MODPATH/$FILE
