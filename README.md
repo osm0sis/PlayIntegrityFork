@@ -127,7 +127,7 @@ Note: RCS is most easily checked using Gemini in Messages and usually clearing M
 ### Failing Google Wallet Tap To Pay Setup Security Requirements
 
 - Reflash the module in your root manager app
-- Ensure you are passing <A13 PI DEVICE or higher integrity. Wallet requires this verdict even on A13+ devices as it is forced in the background. On an A13+ device you can test whether you meet this requirement by temporarily enabling the advanced option "spoofVendingSdk" (see the Advanced Settings section below). Note that this is only to test you meet the requirement and you should not keep this option enabled in order to use Wallet.
+- Ensure you are passing <A13 PI DEVICE or higher integrity. Wallet requires this verdict even on A13+ devices as it is forced in the background.
 - Clear Google Wallet (com.google.android.apps.walletnfcrel) and/or Google Pay (com.google.android.apps.nbu.paisa.user) cache, if you have them installed
 - Clear Google Play Services (com.google.android.gms) cache and data, or, optionally skip clearing data and wait some time (24-72h) for it to resolve on its own
 - Reboot
