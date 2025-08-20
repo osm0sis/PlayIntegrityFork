@@ -206,4 +206,5 @@ if [ "$DIR" = /data/adb/modules/playintegrityfix/autopif2 ]; then
     item "Killing any running GMS DroidGuard/Play Store processes ...";
     sh /data/adb/modules/playintegrityfix/killpi.sh 2>&1 || true;
   fi;
+  [ -d "$DIR" ] && rm -rf "$DIR";
 fi;
