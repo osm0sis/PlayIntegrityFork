@@ -12,7 +12,7 @@ public final class EntryPointVending {
     }
 
     @SuppressLint("DefaultLocale")
-    public static void init(int verboseLogs, int spoofVendingFingerprint, int spoofVendingSdk, String spoofFingerprintValue) {
+    public static void init(int verboseLogs, int spoofVendingFingerprint, int spoofVendingSdk, const char * spoofFingerprintValue) {
         if (spoofVendingSdk > 0){
             int requestSdk = spoofVendingSdk == 1 ? 32 : spoofVendingSdk;
             int targetSdk = Math.min(Build.VERSION.SDK_INT, requestSdk);
@@ -59,5 +59,6 @@ public final class EntryPointVending {
         }
     }
 }
+
 
 
