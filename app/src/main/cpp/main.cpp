@@ -186,7 +186,7 @@ private:
     std::vector<char> dexVector;
     nlohmann::json json;
     std::string pkgName;
-    String spoofFingerprintValue;
+    std::string spoofFingerprintValue;
 
     void readJson() {
         LOGD("JSON contains %d keys!", static_cast<int>(json.size()));
@@ -314,7 +314,7 @@ private:
         if (pkgName == VENDING_PACKAGE) {
             LOGD("JNI %s: Calling EntryPointVending.init", niceName);
             auto entryInit = env->GetStaticMethodID(entryClass, "init", "(II)V");
-            env->CallStaticVoidMethod(entryClass, entryInit, verboseLogs, spoofVendingFingerprint, spoofVendingSdk, spoofFingerprintValue);
+            env->CallStaticVoidMethod(entryClass, entryInit, verboseLogs, spoofVendingFingerprint, spoofVendingSdk, (const char *) spoofFingerprintValue);
         } else {
             LOGD("JNI %s: Sending JSON", niceName);
             auto receiveJson = env->GetStaticMethodID(entryClass, "receiveJson", "(Ljava/lang/String;)V");
