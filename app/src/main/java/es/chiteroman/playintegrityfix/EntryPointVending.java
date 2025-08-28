@@ -12,7 +12,7 @@ public final class EntryPointVending {
     }
 
     @SuppressLint("DefaultLocale")
-    public static void init(int verboseLogs, int spoofVendingFingerprint, int spoofVendingSdk, const char * spoofFingerprintValue) {
+    public static void init(int verboseLogs, int spoofVendingFingerprint, int spoofVendingSdk, char *spoofFingerprintValue) {
         if (spoofVendingSdk > 0){
             int requestSdk = spoofVendingSdk == 1 ? 32 : spoofVendingSdk;
             int targetSdk = Math.min(Build.VERSION.SDK_INT, requestSdk);
@@ -43,7 +43,7 @@ public final class EntryPointVending {
             Field field = Build.VERSION.class.getDeclaredField("FINGERPRINT");
             field.setAccessible(true);
             oldValue = String.valueOf(field.get(null));
-            if (oldValue.equals(spoofFingerprintValue) {
+            if (oldValue.equals(spoofFingerprintValue)) {
                 if (verboseLogs > 2) LOG(String.format("[FINGERPRINT]: %s (unchanged)", oldValue));
                 field.setAccessible(false);
                 return;
@@ -59,6 +59,7 @@ public final class EntryPointVending {
         }
     }
 }
+
 
 
 
