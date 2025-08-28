@@ -3,10 +3,10 @@ name: Android CI
 on:
   workflow_dispatch:
   push:
-    branches: main
+    branches: spoofVendingFingerprint
     paths-ignore: '**.md'
   pull_request:
-    branches: main
+    branches: spoofVendingFingerprint
     paths-ignore: '**.md'
 
 jobs:
