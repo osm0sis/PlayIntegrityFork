@@ -186,7 +186,7 @@ private:
     std::vector<char> dexVector;
     nlohmann::json json;
     std::string pkgName;
-    std::string spoofFingerprintValue = ""
+    std::string spoofFingerprintValue = "";
 
     void readJson() {
         LOGD("JSON contains %d keys!", static_cast<int>(json.size()));
