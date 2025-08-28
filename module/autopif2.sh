@@ -162,7 +162,7 @@ if [ -f "$MIGRATE" ]; then
   if [ -n "$ARGS" ]; then
     grep_json() { [ -f "$2" ] && grep -m1 "$1" $2 | cut -d\" -f4; }
     verboseLogs=$(grep_json "VERBOSE_LOGS" $OLDJSON);
-    ADVSETTINGS="spoofBuild spoofProps spoofProvider spoofSignature spoofVendingSdk verboseLogs";
+    ADVSETTINGS="spoofBuild spoofProps spoofProvider spoofSignature spoofVendingFingerprint spoofVendingSdk verboseLogs";
     for SETTING in $ADVSETTINGS; do
       eval [ -z \"\$$SETTING\" ] \&\& $SETTING=$(grep_json "$SETTING" $OLDJSON);
       eval TMPVAL=\$$SETTING;
