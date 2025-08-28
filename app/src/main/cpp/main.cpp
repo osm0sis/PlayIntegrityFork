@@ -314,7 +314,7 @@ private:
         if (pkgName == VENDING_PACKAGE) {
             LOGD("JNI %s: Calling EntryPointVending.init", niceName);
             auto entryInit = env->GetStaticMethodID(entryClass, "init", "(II)V");
-            env->CallStaticVoidMethod(entryClass, entryInit, verboseLogs, spoofVendingFingerprint, spoofVendingSdk, (const char *) spoofFingerprintValue);
+            env->CallStaticVoidMethod(entryClass, entryInit, verboseLogs, spoofVendingFingerprint, spoofVendingSdk, spoofFingerprintValue.c_str());
         } else {
             LOGD("JNI %s: Sending JSON", niceName);
             auto receiveJson = env->GetStaticMethodID(entryClass, "receiveJson", "(Ljava/lang/String;)V");
