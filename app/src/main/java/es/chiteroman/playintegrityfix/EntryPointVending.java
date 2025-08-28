@@ -35,7 +35,7 @@ public final class EntryPointVending {
                      NullPointerException | ExceptionInInitializerError e) {
                 LOG("SDK_INT field not accessible: " + e);
             }
-            return
+            return;
         }
         if (spoofVendingFingerprint < 1) return;
         String oldValue;
@@ -59,6 +59,7 @@ public final class EntryPointVending {
         }
     }
 }
+
 
 
 
