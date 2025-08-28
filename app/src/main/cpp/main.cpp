@@ -186,6 +186,7 @@ private:
     std::vector<char> dexVector;
     nlohmann::json json;
     std::string pkgName;
+    std::string spoofFingerprintValue;
 
     void readJson() {
         LOGD("JSON contains %d keys!", static_cast<int>(json.size()));
@@ -211,13 +212,15 @@ private:
             }
             json.erase("spoofVendingSdk");
         }
-        // Only parse spoofVendingFingerprint if not forcing legacy verdict
-        if (spoofVendingSdk < 1 && json.contains("spoofVendingFingerprint")) {
-            if (!json["spoofVendingFingerprint"].is_null() && json["spoofVendingFingerprint"].is_string() && json["spoofVendingFingerprint"] != "") {
+        // Only parse spoofVendingFingerprint if not forcing legacy verdict and FINGERPRINT field exists
+        if (spoofVendingSdk < 1 && json.contains("spoofVendingFingerprint") && json.contains("FINGERPRINT")) {
+            if (!json["spoofVendingFingerprint"].is_null() && json["spoofVendingFingerprint"].is_string() && json["spoofVendingFingerprint"] != "" &&
+                !json["FINGERPRINT"].is_null() && json["FINGPERINT"].is_string() && json["FINGERPRINT"] != "") {
                 spoofVendingFingerprint = stoi(json["spoofVendingFingerprint"].get<std::string>());
+                spoofFingerprintValue = json["spoofVendingFingerprint"].get<std::string>();
                 if (verboseLogs > 0) LOGD("Spoofing Fingerprint in Play Store %s!", (spoofVendingFingerprint > 0) ? "enabled" : "disabled");
             } else {
-                LOGD("Error parsing spoofVendingFingerprint!");
+                LOGD("Error parsing spoofVendingFingerprint or FINGERPRINT field!");
             }
             json.erase("spoofVendingFingerprint");
         }
@@ -311,7 +314,7 @@ private:
         if (pkgName == VENDING_PACKAGE) {
             LOGD("JNI %s: Calling EntryPointVending.init", niceName);
             auto entryInit = env->GetStaticMethodID(entryClass, "init", "(II)V");
-            env->CallStaticVoidMethod(entryClass, entryInit, verboseLogs, spoofVendingSdk);
+            env->CallStaticVoidMethod(entryClass, entryInit, verboseLogs, spoofVendingFingerprint, spoofFingerprintValue, spoofVendingSdk);
         } else {
             LOGD("JNI %s: Sending JSON", niceName);
             auto receiveJson = env->GetStaticMethodID(entryClass, "receiveJson", "(Ljava/lang/String;)V");
