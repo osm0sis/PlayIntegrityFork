@@ -14,10 +14,11 @@ public final class EntryPointVending {
     @SuppressLint("DefaultLocale")
     public static void init(int verboseLogs, int spoofVendingFingerprint, int spoofVendingSdk, String spoofFingerprintValue) {
         if (spoofVendingSdk < 1){
+            // Only spoof FINGERPRINT to Play Store if not forcing legacy verdict           
             if (spoofVendingFingerprint < 1) return;
             String oldValue;
             try {
-                Field field = Build.VERSION.class.getDeclaredField("FINGERPRINT");
+                Field field = Build.class.getDeclaredField("FINGERPRINT");
                 field.setAccessible(true);
                 oldValue = String.valueOf(field.get(null));
                 if (oldValue.equals(spoofFingerprintValue)) {
@@ -58,3 +59,4 @@ public final class EntryPointVending {
          }
     }
 }
+
