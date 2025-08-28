@@ -20,6 +20,7 @@ static int spoofBuild = 1;
 static int spoofProps = 1;
 static int spoofProvider = 1;
 static int spoofSignature = 0;
+static int spoofVendingFingperint = 0;
 static int spoofVendingSdk = 0;
 
 static std::map<std::string, std::string> jsonProps;
@@ -166,10 +167,10 @@ public:
         readJson();
 
         if (pkgName == VENDING_PACKAGE) spoofProps = spoofBuild = spoofProvider = spoofSignature = 0;
-        else spoofVendingSdk = 0;
+        else spoofVendingFingerprint = spoofVendingSdk = 0;
 
         if (spoofProps > 0) doHook();
-        if (spoofBuild + spoofProvider + spoofSignature + spoofVendingSdk > 0) inject();
+        if (spoofBuild + spoofProvider + spoofSignature + spoofVendingFingerprint + spoofVendingSdk > 0) inject();
 
         dexVector.clear();
         json.clear();
@@ -209,6 +210,16 @@ private:
                 LOGD("Error parsing spoofVendingSdk!");
             }
             json.erase("spoofVendingSdk");
+        }
+        // Only parse spoofVendingFingerprint if not forcing legacy verdict
+        if (spoofVendingSdk < 1 && json.contains("spoofVendingFingerprint")) {
+            if (!json["spoofVendingFingerprint"].is_null() && json["spoofVendingFingerprint"].is_string() && json["spoofVendingFingerprint"] != "") {
+                spoofVendingFingerprint = stoi(json["spoofVendingFingerprint"].get<std::string>());
+                if (verboseLogs > 0) LOGD("Spoofing Fingerprint in Play Store %s!", (spoofVendingFingerprint > 0) ? "enabled" : "disabled");
+            } else {
+                LOGD("Error parsing spoofVendingFingerprint!");
+            }
+            json.erase("spoofVendingFingerprint");
         }
         if (pkgName == VENDING_PACKAGE) {
             json.clear();
