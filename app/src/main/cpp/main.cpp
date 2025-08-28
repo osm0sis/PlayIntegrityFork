@@ -20,7 +20,7 @@ static int spoofBuild = 1;
 static int spoofProps = 1;
 static int spoofProvider = 1;
 static int spoofSignature = 0;
-static int spoofVendingFingperint = 0;
+static int spoofVendingFingerprint = 0;
 static int spoofVendingSdk = 0;
 
 static std::map<std::string, std::string> jsonProps;
