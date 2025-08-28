@@ -186,7 +186,7 @@ private:
     std::vector<char> dexVector;
     nlohmann::json json;
     std::string pkgName;
-    std::string spoofFingerprintValue;
+    std::string spoofFingerprintValue = ""
 
     void readJson() {
         LOGD("JSON contains %d keys!", static_cast<int>(json.size()));
@@ -215,7 +215,7 @@ private:
         // Only parse spoofVendingFingerprint if not forcing legacy verdict and FINGERPRINT field exists
         if (spoofVendingSdk < 1 && json.contains("spoofVendingFingerprint") && json.contains("FINGERPRINT")) {
             if (!json["spoofVendingFingerprint"].is_null() && json["spoofVendingFingerprint"].is_string() && json["spoofVendingFingerprint"] != "" &&
-                !json["FINGERPRINT"].is_null() && json["FINGPERINT"].is_string() && json["FINGERPRINT"] != "") {
+                !json["FINGERPRINT"].is_null() && json["FINGERPRINT"].is_string() && json["FINGERPRINT"] != "") {
                 spoofVendingFingerprint = stoi(json["spoofVendingFingerprint"].get<std::string>());
                 spoofFingerprintValue = json["spoofVendingFingerprint"].get<std::string>();
                 if (verboseLogs > 0) LOGD("Spoofing Fingerprint in Play Store %s!", (spoofVendingFingerprint > 0) ? "enabled" : "disabled");
