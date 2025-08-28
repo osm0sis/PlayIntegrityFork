@@ -31,6 +31,7 @@
     "spoofProps": "1",
     "spoofProvider": "1",
     "spoofSignature": "0",
+    "spoofVendingFingerprint": "0",
     "spoofVendingSdk": "0",
     "verboseLogs": "0"
 }
