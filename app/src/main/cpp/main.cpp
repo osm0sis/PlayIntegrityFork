@@ -216,7 +216,7 @@ private:
             if (!json["spoofVendingFingerprint"].is_null() && json["spoofVendingFingerprint"].is_string() && json["spoofVendingFingerprint"] != "" &&
                 json.contains("FINGERPRINT") && !json["FINGERPRINT"].is_null() && json["FINGERPRINT"].is_string() && json["FINGERPRINT"] != "") {
                 spoofVendingFingerprint = stoi(json["spoofVendingFingerprint"].get<std::string>());
-                spoofFingerprintValue = json["spoofVendingFingerprint"].get<std::string>();
+                spoofFingerprintValue = json["FINGERPRINT"].get<std::string>();
                 if (verboseLogs > 0) LOGD("Spoofing Fingerprint in Play Store %s!", (spoofVendingFingerprint > 0) ? "enabled" : "disabled");
             } else {
                 LOGD("Error parsing spoofVendingFingerprint or FINGERPRINT field!");
