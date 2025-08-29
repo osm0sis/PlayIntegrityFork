@@ -324,7 +324,15 @@ private:
             LOGD("JNI %s: Calling EntryPoint.init", niceName);
             auto entryInit = env->GetStaticMethodID(entryClass, "init", "(IIII)V");
             env->CallStaticVoidMethod(entryClass, entryInit, verboseLogs, spoofBuild, spoofProvider, spoofSignature);
+            env->DeleteLocalRef(javaStr);
         }
+        env->DeleteLocalRef(clClass);
+        env->DeleteLocalRef(dexClClass);
+        env->DeleteLocalRef(systemClassLoader);
+        env->DeleteLocalRef(dexCl);
+        env->DeleteLocalRef(buffer);
+        env->DeleteLocalRef(entryClassName);
+        env->DeleteLocalRef(entryClassObj);
     }
 };
 
@@ -368,6 +376,14 @@ static void companion(int fd) {
 
     dexVector.clear();
     jsonVector.clear();
+}
+
+/*
+ * - The fix is public now: https://github.com/JingMatrix/NeoZygisk/commit/76d54228c7e6fe14cca93338865008946b94f7ee
+ * - Remeber to add this for all other zygisk c++ library
+ */
+extern "C" int __cxa_atexit(void (*func)(void*), void* arg, void* dso) {
+    return 0;
 }
 
 REGISTER_ZYGISK_MODULE(PlayIntegrityFix)
