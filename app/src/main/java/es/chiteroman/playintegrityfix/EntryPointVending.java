@@ -36,27 +36,28 @@ public final class EntryPointVending {
                 LOG("FINGERPRINT field not accessible: " + e);
             }
         }
-        int requestSdk = spoofVendingSdk == 1 ? 32 : spoofVendingSdk;
-        int targetSdk = Math.min(Build.VERSION.SDK_INT, requestSdk);
-        int oldValue;
-        try {
-            Field field = Build.VERSION.class.getDeclaredField("SDK_INT");
-            field.setAccessible(true);
-            oldValue = field.getInt(null);
-            if (oldValue == targetSdk) {
-                if (verboseLogs > 2) LOG(String.format("[SDK_INT]: %d (unchanged)", oldValue));
+        else {
+            int requestSdk = spoofVendingSdk == 1 ? 32 : spoofVendingSdk;
+            int targetSdk = Math.min(Build.VERSION.SDK_INT, requestSdk);
+            int oldValue;
+            try {
+                Field field = Build.VERSION.class.getDeclaredField("SDK_INT");
+                field.setAccessible(true);
+                oldValue = field.getInt(null);
+                if (oldValue == targetSdk) {
+                    if (verboseLogs > 2) LOG(String.format("[SDK_INT]: %d (unchanged)", oldValue));
+                    field.setAccessible(false);
+                    return;
+                }
+                field.set(null, targetSdk);
                 field.setAccessible(false);
-                return;
+                LOG(String.format("[SDK_INT]: %d -> %d", oldValue, targetSdk));
+            } catch (NoSuchFieldException e) {
+                LOG("SDK_INT field not found: " + e);
+            } catch (SecurityException | IllegalAccessException | IllegalArgumentException |
+                     NullPointerException | ExceptionInInitializerError e) {
+                LOG("SDK_INT field not accessible: " + e);
             }
-            field.set(null, targetSdk);
-            field.setAccessible(false);
-            LOG(String.format("[SDK_INT]: %d -> %d", oldValue, targetSdk));
-        } catch (NoSuchFieldException e) {
-             LOG("SDK_INT field not found: " + e);
-         } catch (SecurityException | IllegalAccessException | IllegalArgumentException |
-                 NullPointerException | ExceptionInInitializerError e) {
-             LOG("SDK_INT field not accessible: " + e);
-         }
+        }
     }
 }
-
