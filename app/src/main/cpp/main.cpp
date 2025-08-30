@@ -324,6 +324,7 @@ private:
             LOGD("JNI %s: Calling EntryPoint.init", niceName);
             auto entryInit = env->GetStaticMethodID(entryClass, "init", "(IIII)V");
             env->CallStaticVoidMethod(entryClass, entryInit, verboseLogs, spoofBuild, spoofProvider, spoofSignature);
+            env->DeleteLocalRef(javaStr);
         }
         env->DeleteLocalRef(clClass);
         env->DeleteLocalRef(dexClClass);
@@ -332,7 +333,6 @@ private:
         env->DeleteLocalRef(buffer);
         env->DeleteLocalRef(entryClassName);
         env->DeleteLocalRef(entryClassObj);
-        env->DeleteLocalRef(javaStr);
     }
 };
 
