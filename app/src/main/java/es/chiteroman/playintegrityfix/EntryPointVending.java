@@ -35,8 +35,7 @@ public final class EntryPointVending {
                      NullPointerException | ExceptionInInitializerError e) {
                 LOG("FINGERPRINT field not accessible: " + e);
             }
-        }
-        else {
+        } else {
             int requestSdk = spoofVendingSdk == 1 ? 32 : spoofVendingSdk;
             int targetSdk = Math.min(Build.VERSION.SDK_INT, requestSdk);
             int oldValue;
