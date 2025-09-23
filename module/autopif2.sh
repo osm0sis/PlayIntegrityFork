@@ -161,7 +161,7 @@ if [ -f "$MIGRATE" ]; then
     item "Forcing configuration for <A13 PI Strong ...";
     ARGS="-a"; PATCH_COMMENT=1; spoofProvider=0;
   fi;
-  [ -f /data/adb/tricky_store/security_patch.txt ] && unset PATCH_COMMENT;
+  [ -d /data/adb/tricky_store ] && unset PATCH_COMMENT;
   item "Converting pif.json to custom.pif.json with migrate.sh:";
   rm -f custom.pif.json;
   sh $MIGRATE -i $ARGS pif.json;
@@ -192,9 +192,11 @@ if [ "$DIR" = /data/adb/modules/playintegrityfix/autopif2 ]; then
   fi;
   item "Installing new json ...";
   cp -fv $NEWNAME ..;
-  TS_SECPAT=/data/adb/tricky_store/security_patch.txt;
-  if [ -f "$TS_SECPAT" ]; then
+  TS_DIR=/data/adb/tricky_store;
+  if [ -d "$TS_DIR" ]; then
     item "Updating Tricky Store security_patch.txt ...";
+    TS_SECPAT=$TS_DIR/security_patch.txt;
+    touch $TS_SECPAT;
     [ -s "$TS_SECPAT" ] || echo "all=" > $TS_SECPAT;
     grep -qE '^[0-9]{8}$' $TS_SECPAT && sed -i "s/^.*$/${SECURITY_PATCH//-}/" $TS_SECPAT;
     grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' $TS_SECPAT && sed -i "s/^.*$/$SECURITY_PATCH/" $TS_SECPAT;
