@@ -160,6 +160,8 @@ if [ -f "$MIGRATE" ]; then
   if [ "$FORCE_STRONG" ]; then
     item "Forcing configuration for <A13 PI Strong ...";
     ARGS="-a"; PATCH_COMMENT=1; spoofProvider=0;
+  else
+    item "Retaining existing configuration ...";
   fi;
   [ -d /data/adb/tricky_store ] && unset PATCH_COMMENT;
   item "Converting pif.json to custom.pif.json with migrate.sh:";
