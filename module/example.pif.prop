@@ -1,0 +1,35 @@
+# Rename to custom.pif.prop once completed
+#
+# These are the current suggested defaults but you may add as many other fields/properties as needed
+#
+# See android.os.Build source for all fields and field values' corresponding properties:
+# https://android.googlesource.com/platform/frameworks/base/+/master/core/java/android/os/Build.java
+
+# Build Fields
+MANUFACTURER=
+MODEL=
+FINGERPRINT=
+BRAND=
+PRODUCT=
+DEVICE=
+RELEASE=
+ID=
+INCREMENTAL=
+TYPE=
+TAGS=
+SECURITY_PATCH=
+DEVICE_INITIAL_SDK_INT=
+
+# System Properties
+*.build.id=        # for ro.build.id
+*.security_patch=  # for ro.build.version.security_patch
+*api_level=        # for ro.board.api_level, ro.board.first_api_level, ro.product.first_api_level and ro.vendor.api_level
+
+# Advanced Settings
+spoofBuild=1
+spoofProps=1
+spoofProvider=1
+spoofSignature=0
+spoofVendingFinger=0
+spoofVendingSdk=0
+verboseLogs=0

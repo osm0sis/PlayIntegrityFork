@@ -10,6 +10,9 @@
 
 #define DEX_FILE_PATH "/data/adb/modules/playintegrityfix/classes.dex"
 
+#define PROP_FILE_PATH "/data/adb/modules/playintegrityfix/pif.prop"
+#define CUSTOM_PROP_FILE_PATH "/data/adb/modules/playintegrityfix/custom.pif.prop"
+
 #define JSON_FILE_PATH "/data/adb/modules/playintegrityfix/pif.json"
 #define CUSTOM_JSON_FILE_PATH "/data/adb/modules/playintegrityfix/custom.pif.json"
 
@@ -122,13 +125,13 @@ public:
             return;
         }
 
-        std::vector<char> jsonVector;
-        long dexSize = 0, jsonSize = 0;
+        std::vector<char> configVector;
+        long dexSize = 0, configSize = 0;
 
         int fd = api->connectCompanion();
 
         read(fd, &dexSize, sizeof(long));
-        read(fd, &jsonSize, sizeof(long));
+        read(fd, &configSize, sizeof(long));
 
         if (dexSize < 1) {
             close(fd);
@@ -137,29 +140,68 @@ public:
             return;
         }
 
-        if (jsonSize < 1) {
+        if (configSize < 1) {
             close(fd);
-            LOGD("Couldn't read json file");
+            LOGD("Couldn't read config file");
             api->setOption(zygisk::DLCLOSE_MODULE_LIBRARY);
             return;
         }
 
         LOGD("Read from file descriptor for 'dex' -> %ld bytes", dexSize);
-        LOGD("Read from file descriptor for 'json' -> %ld bytes", jsonSize);
+        LOGD("Read from file descriptor for 'config' -> %ld bytes", configSize);
 
         dexVector.resize(dexSize);
         read(fd, dexVector.data(), dexSize);
 
-        jsonVector.resize(jsonSize);
-        read(fd, jsonVector.data(), jsonSize);
+        configVector.resize(configSize);
+        read(fd, configVector.data(), configSize);
 
         close(fd);
 
-        std::string jsonString(jsonVector.cbegin(), jsonVector.cend());
-        json = nlohmann::json::parse(jsonString, nullptr, false, true);
+        std::string configString(configVector.cbegin(), configVector.cend());
 
-        jsonVector.clear();
-        jsonString.clear();
+        if (!nlohmann::json::accept(configString, true)) {
+            LOGD("Converting config from prop format to JSON format");
+
+            configString.erase(std::remove(configString.begin(), configString.end(), '\r'), configString.end());
+
+            std::string jsonString = "{";
+            char propDelimiter = '=';
+            char commentDelimiter = '#';
+            size_t beginPos = 0, endPos = 0;
+            while ((endPos = configString.find('\n', beginPos)) != std::string::npos) {
+                std::string line = configString.substr(beginPos, endPos - beginPos);
+                beginPos = endPos + 1;
+                if (line.empty() || line[0] == '#') continue;
+                std::string name, value;
+                size_t propDelimiterPos = line.find(propDelimiter);
+                if (propDelimiterPos != std::string::npos) {
+                    name = line.substr(0, propDelimiterPos);
+                    value = line.substr(propDelimiterPos + 1);
+                } else {
+                    LOGD("Invalid prop entry, skipping");
+                    continue;
+                }
+                size_t commentDelimiterPos = value.find(commentDelimiter);
+                if (commentDelimiterPos != std::string::npos) {
+                    value = value.substr(0, commentDelimiterPos);
+                    size_t lastPos = value.find_last_not_of(" ");
+                    if (lastPos != std::string::npos) value.resize(lastPos + 1);
+                }
+                jsonString += "\n\"" + name + "\": \"" + value + "\",";
+            }
+            if (jsonString.back() == ',') jsonString.pop_back();
+            jsonString += "\n}\n";
+
+            configString = jsonString;
+
+            jsonString.clear();
+        }
+
+        json = nlohmann::json::parse(configString, nullptr, false, true);
+
+        configVector.clear();
+        configString.clear();
     }
 
     void postAppSpecialize(const zygisk::AppSpecializeArgs *args) override {
@@ -347,8 +389,8 @@ private:
 };
 
 static void companion(int fd) {
-    long dexSize = 0, jsonSize = 0;
-    std::vector<char> dexVector, jsonVector;
+    long dexSize = 0, configSize = 0;
+    std::vector<char> dexVector, configVector;
 
     FILE *dex = fopen(DEX_FILE_PATH, "rb");
 
@@ -363,29 +405,33 @@ static void companion(int fd) {
         fclose(dex);
     }
 
-    FILE *json = fopen(CUSTOM_JSON_FILE_PATH, "r");
-    if (!json)
-        json = fopen(JSON_FILE_PATH, "r");
+    FILE *config = fopen(CUSTOM_PROP_FILE_PATH, "r");
+    if (!config)
+        config = fopen(CUSTOM_JSON_FILE_PATH, "r");
+    if (!config)
+        config = fopen(PROP_FILE_PATH, "r");
+    if (!config)
+        config = fopen(JSON_FILE_PATH, "r");
 
-    if (json) {
-        fseek(json, 0, SEEK_END);
-        jsonSize = ftell(json);
-        fseek(json, 0, SEEK_SET);
+    if (config) {
+        fseek(config, 0, SEEK_END);
+        configSize = ftell(config);
+        fseek(config, 0, SEEK_SET);
 
-        jsonVector.resize(jsonSize);
-        fread(jsonVector.data(), 1, jsonSize, json);
+        configVector.resize(configSize);
+        fread(configVector.data(), 1, configSize, config);
 
-        fclose(json);
+        fclose(config);
     }
 
     write(fd, &dexSize, sizeof(long));
-    write(fd, &jsonSize, sizeof(long));
+    write(fd, &configSize, sizeof(long));
 
     write(fd, dexVector.data(), dexSize);
-    write(fd, jsonVector.data(), jsonSize);
+    write(fd, configVector.data(), configSize);
 
     dexVector.clear();
-    jsonVector.clear();
+    configVector.clear();
 }
 
 REGISTER_ZYGISK_MODULE(PlayIntegrityFix)
