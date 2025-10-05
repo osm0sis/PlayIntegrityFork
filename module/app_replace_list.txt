@@ -1,4 +1,4 @@
-# Rename to custom.app_replace.list once customized
+# Rename to custom.app_replace_list.txt once customized
 #
 # Add conflicting custom ROM injection app folder/file paths to this list
 # and they will be replaced/hidden systemlessly to disable them

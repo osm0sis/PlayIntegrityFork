@@ -4,11 +4,13 @@ if [ -f /data/adb/modules/playintegrityfix/scripts-only-mode ]; then
     touch $MODPATH/scripts-only-mode
     sed -i 's/\(description=\)\(.*\)/\1[Scripts-only mode] \2/' $MODPATH/module.prop
     [ -f /data/adb/modules/playintegrityfix/uninstall.sh ] && sh /data/adb/modules/playintegrityfix/uninstall.sh
-    rm -rf $MODPATH/action.sh $MODPATH/autopif2.sh $MODPATH/classes.dex $MODPATH/common_setup.sh \
-        $MODPATH/custom.pif.json $MODPATH/custom.pif.prop $MODPATH/example.app_replace.list \
+    rm -rf $MODPATH/action.sh $MODPATH/app_replace_list.txt \
+        $MODPATH/autopif2.sh $MODPATH/classes.dex \
+        $MODPATH/common_setup.sh $MODPATH/custom.app_replace_list.txt \
+        $MODPATH/custom.pif.json $MODPATH/custom.pif.prop  \
         $MODPATH/example.pif.json $MODPATH/example.pif.prop $MODPATH/migrate.sh \
         $MODPATH/pif.json $MODPATH/pif.prop $MODPATH/zygisk \
-        /data/adb/modules/playintegrityfix/custom.app_replace.list \
+        /data/adb/modules/playintegrityfix/custom.app_replace_list.txt \
         /data/adb/modules/playintegrityfix/custom.pif.json \
         /data/adb/modules/playintegrityfix/custom.pif.prop \
         /data/adb/modules/playintegrityfix/system \
@@ -22,7 +24,7 @@ if [ -d /data/adb/modules/playintegrityfix/system ]; then
 fi
 
 # Copy any supported custom files to updated module
-for FILE in custom.app_replace.list custom.pif.json custom.pif.prop skipdelprop uninstall.sh; do
+for FILE in custom.app_replace_list.txt custom.pif.json custom.pif.prop skipdelprop uninstall.sh; do
     if [ -f "/data/adb/modules/playintegrityfix/$FILE" ]; then
         ui_print "- Restoring $FILE"
         cp -af /data/adb/modules/playintegrityfix/$FILE $MODPATH/$FILE
