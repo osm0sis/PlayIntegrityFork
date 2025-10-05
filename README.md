@@ -61,7 +61,7 @@ A migration may also be performed manually in the module directory with a custom
 
 ### About 'custom.app_replace.list' file
 
-You can customize the included default [example.app_replace.list](https://raw.githubusercontent.com/osm0sis/PlayIntegrityFork/main/module/example.app_replace.list) then rename it to custom.app_replace.list to systemlessly replace any additional conflicting custom ROM spoof injection app paths to disable them. Changes take effect after a reboot.
+You can customize the included default [example.app_replace.list](https://raw.githubusercontent.com/osm0sis/PlayIntegrityFork/refs/tags/v14/module/example.app_replace.list) then rename it to custom.app_replace.list to systemlessly replace any additional conflicting custom ROM spoof injection app paths to disable them. Changes take effect after a reboot.
 
 ### About 'autopif2.sh' and 'killpi.sh' script files
 
