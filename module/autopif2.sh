@@ -21,7 +21,7 @@ until [ -z "$1" ]; do
   esac;
 done;
 
-echo "Pixel Beta pif.json generator script \
+echo "Pixel Beta pif.prop generator script \
   \n  by osm0sis @ xda-developers";
 
 case "$0" in
@@ -133,27 +133,28 @@ if [ -z "$FINGERPRINT" -o -z "$SECURITY_PATCH" ]; then
   exit 1;
 fi;
 
-item "Dumping values to minimal pif.json ...";
-cat <<EOF | tee pif.json;
-{
-  "MANUFACTURER": "Google",
-  "MODEL": "$MODEL",
-  "FINGERPRINT": "$FINGERPRINT",
-  "PRODUCT": "$PRODUCT",
-  "DEVICE": "$DEVICE",
-  "SECURITY_PATCH": "$SECURITY_PATCH",
-  "DEVICE_INITIAL_SDK_INT": "32"
-}
+item "Dumping values to minimal pif.prop ...";
+cat <<EOF | tee pif.prop;
+MANUFACTURER=Google
+MODEL=$MODEL
+FINGERPRINT=$FINGERPRINT
+PRODUCT=$PRODUCT
+DEVICE=$DEVICE
+SECURITY_PATCH=$SECURITY_PATCH
+DEVICE_INITIAL_SDK_INT=32
 EOF
 
 for MIGRATE in migrate.sh /data/adb/modules/playintegrityfix/migrate.sh; do
   [ -f "$MIGRATE" ] && break; 
 done;
 if [ -f "$MIGRATE" ]; then
-  OLDJSON=/data/adb/modules/playintegrityfix/custom.pif.json;
-  if [ -f "$OLDJSON" ]; then
-    grep -q '//"\*.security_patch"' $OLDJSON && PATCH_COMMENT=1;
-    grep -qE "verboseLogs|VERBOSE_LOGS" $OLDJSON && ARGS="-a";
+  for OLDPIF in /data/adb/modules/playintegrityfix/custom.pif.prop /data/adb/modules/playintegrityfix/custom.pif.json; do
+    [ -f "$OLDPIF" ] && break;
+  done;
+  if [ -f "$OLDPIF" ]; then
+    grep -q '//"\*.security_patch"' $OLDPIF && PATCH_COMMENT=1;
+    grep -q '#\*.security_patch' $OLDPIF && PATCH_COMMENT=1;
+    grep -qE "verboseLogs|VERBOSE_LOGS" $OLDPIF && ARGS="-a";
   else
     FORCE_STRONG=1;
   fi;
@@ -164,35 +165,42 @@ if [ -f "$MIGRATE" ]; then
     item "Retaining existing configuration ...";
   fi;
   [ -d /data/adb/tricky_store ] && unset PATCH_COMMENT;
-  item "Converting pif.json to custom.pif.json with migrate.sh:";
-  rm -f custom.pif.json;
-  sh $MIGRATE -i $ARGS pif.json;
+  item "Converting pif.prop to custom.pif.prop with migrate.sh:";
+  rm -f pif.json custom.pif.json custom.pif.prop;
+  sh $MIGRATE -i $ARGS pif.prop;
   if [ -n "$ARGS" ]; then
-    grep_json() { [ -f "$2" ] && grep -m1 "$1" $2 | cut -d\" -f4; }
-    verboseLogs=$(grep_json "VERBOSE_LOGS" $OLDJSON);
+    grep_config() {
+      if [ -f "$2" ]; then
+        case $2 in
+          *.json) grep -m1 "$1" $2 | cut -d\" -f4;;
+          *.prop) grep -m1 "$1=" "$2" | cut -d= -f2 | cut -d\# -f1 | sed 's/[[:space:]]*$//';;
+        esac;
+      fi;
+    }
+    verboseLogs=$(grep_config "VERBOSE_LOGS" $OLDPIF);
     ADVSETTINGS="spoofBuild spoofProps spoofProvider spoofSignature spoofVendingFinger spoofVendingSdk verboseLogs";
     for SETTING in $ADVSETTINGS; do
-      eval [ -z \"\$$SETTING\" ] \&\& $SETTING=$(grep_json "$SETTING" $OLDJSON);
+      eval [ -z \"\$$SETTING\" ] \&\& $SETTING=$(grep_config "$SETTING" $OLDPIF);
       eval TMPVAL=\$$SETTING;
-      [ -n "$TMPVAL" ] && sed -i "s;\($SETTING\": \"\).;\1$TMPVAL;" custom.pif.json;
+      [ -n "$TMPVAL" ] && sed -i "s;\($SETTING=\).;\1$TMPVAL;" custom.pif.prop;
     done;
   fi;
-  [ "$PATCH_COMMENT" ] && sed -i 's;"\*.security_patch";//"\*.security_patch";' custom.pif.json;
-  sed -i "s;};\n  // Beta Released: $BETA_REL_DATE\n  // Estimated Expiry: $BETA_EXP_DATE\n};" custom.pif.json;
-  cat custom.pif.json;
+  [ "$PATCH_COMMENT" ] && sed -i 's;\*.security_patch;#\*.security_patch;' custom.pif.prop;
+  echo "\n# Beta Released: $BETA_REL_DATE\n# Estimated Expiry: $BETA_EXP_DATE" >> custom.pif.prop;
+  cat custom.pif.prop;
 fi;
 
 if [ "$DIR" = /data/adb/modules/playintegrityfix/autopif2 ]; then
   if [ -f /data/adb/modules/playintegrityfix/migrate.sh ]; then
-    NEWNAME="custom.pif.json";
+    NEWNAME="custom.pif.prop";
   else
-    NEWNAME="pif.json";
+    NEWNAME="pif.prop";
   fi;
   if [ -f "../$NEWNAME" ]; then
     item "Renaming old file to $NEWNAME.bak ...";
     mv -fv ../$NEWNAME ../$NEWNAME.bak;
   fi;
-  item "Installing new json ...";
+  item "Installing new prop ...";
   cp -fv $NEWNAME ..;
   TS_DIR=/data/adb/tricky_store;
   if [ -d "$TS_DIR" ]; then
