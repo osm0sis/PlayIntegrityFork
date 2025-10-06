@@ -26,13 +26,19 @@ function usage() {
 	echo "Simple script to change the advanced settings in PIFork."
 	echo "Root required!"
 	echo ""
-	echo "./settings.sh [-h|--help] [-f|--force] [-r|--reset] [setting[=value]]"
+	echo "./${0##*\/} [-h|--help] [-f|--force] [-r|--reset] [setting[=value]]"
 	echo "    -h|--help: Prints this help message and exits"
 	echo "    -f|--force: ignore type checks of the setting to set, set it anyway"
 	echo "    -r|--reset: Reset all settings to their default."
 	echo "    Providing a Setting name without setting a value ( no = ) will take you to the interactive value selection."
 	echo "    Empty value ( setting= ) resets the default value"
 	echo "    Running without providing a setting triggers interactive mode, allowing you to select the setting you want from a list."
+	printNames
+}
+
+function printNames() {
+	echo ""
+	echo "A script by Vagelis1608 @xda for PIFork by osm0sis @xda"
 }
 
 function errOut() { # <error code> <printed error>
@@ -71,9 +77,7 @@ function setSetting() { # setting value( empty for default )
 		echo "Warning: Unknown PIF module found!"
 		echo "PIFork by osm0sis is the only officially supported one."
 		if [[ "$forceSet" -ne 1 ]]; then
-			echo "You can use force mode (-f|--force) to write anyway."
-			echo "However, its extremely likely to break something."
-			exit 3
+			errOut 3 "You can use force mode (-f|--force) to write anyway.\nHowever, its extremely likely to break something."
 		fi
 	fi
 
@@ -163,10 +167,35 @@ if [[ ${#selection[@]} -eq 0 ]]; then
 	entered=""
 	echo "Available advanced settings:"
 	for i in ${!knownSettings[@]}; do
-		echo "${i}"': '"$( cut -d, -f1 <<< ${knownSettings[$i]} )"
+		printSet="$( cut -d, -f1 <<< ${knownSettings[$i]} )"
+		echo "${i}"': '"$printSet"' ( current value: '"$( getSetting $printSet )"
 	done
+	echo "r: Reset all Advanced Settings to default values."
+	echo "e: Exit script."
+	echo ""
+
 	while [[ -z "$entered" ]]; do
 		read -p 'Enter your selection [0-'"$i"']: ' entered
+
+		# Reset mode
+		if [[ -n $( grep -ix -e 'r' -e 'reset' <<< "$entered" ) ]]; then
+			read -p "All advanced settings will be reset to their default values.\nAre you sure?(y/n) " confirmReset
+			if [[ -n $( grep -ix -e 'y' -e 'yes' <<< "$confirmReset" ]]; then
+				for opt in ${knownSettings[@]}; do
+                	setSetting "$( cut -d, -f1 <<< $opt )"
+	            done
+				echo "Done!"
+			fi
+			entered="e"
+		fi
+
+		# Exit
+		if [[ -n $( grep -ix -e 'e' -e 'exit' <<< "$entered" ) ]]; then
+			echo "Exiting..."
+			printNames
+			exit 0
+		fi
+
 		if [[ -z $( grep -x -e '.[0-9]$' -e '^[0-9]$' <<< "$entered" ) || \
 					$entered -lt 0 || $entered -gt $i ]]; then
 			echo 'Invalid input, must be within [0-'"$i"']'
@@ -189,3 +218,5 @@ if [[ $changed -eq 1 ]]; then
 	echo "Executing killpi.sh to apply changes"
 	sh "${mainFile%\/*}/killpi.sh"
 fi
+
+printNames
