@@ -71,6 +71,28 @@ The autopif2 script generates a random device fingerprint from the latest Pixel 
 
 The killpi script forces the Google Play Services DroidGuard (com.google.android.gms.unstable) and Play Store (com.android.vending) processes to end, making them restart with the next attestation attempt; useful for testing out different fingerprints without requiring a reboot in between.
 
+### settings.sh
+Simple script to interactively change the advanced settings then runs killpi.sh to apply the changes.
+
+Must be run as root!
+
+./settings.sh [-h] [-f] [-r] [-l] [setting[=value]]
+
+    -h|--help: Prints this help message and exits
+    
+    -f|--force: ignore type checks of the setting to set, set it anyway
+    
+    -r|--reset: Reset all settings to their default.
+    
+    -l|--list: List all current values and exit.
+    
+    Providing a Setting name without setting a value ( no = ) will take you to the interactive value selection.
+    Empty value ( setting= ) resets the default value
+    Running without providing a setting triggers interactive mode, allowing you to select the setting you want from a list.
+    
+
+A script by Vagelis1608 @xda for PIFork by osm0sis @xda
+
 ## Troubleshooting
 
 Make sure Google Play Services (com.google.android.gms) is NOT on the Magisk DenyList if Enforce DenyList is enabled since this interferes with the module; the module does prevent this using scripts but it only happens once during each reboot.
