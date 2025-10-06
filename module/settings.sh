@@ -26,7 +26,7 @@ function usage() {
 	echo "Simple script to change the advanced settings in PIFork."
 	echo "Root required!"
 	echo ""
-	echo "./${0##*\/} [-h|--help] [-f|--force] [-r|--reset] [setting[=value]]"
+	echo "./${0##*\/} [-h] [-f] [-r] [-l] [setting[=value]]"
 	echo "    -h|--help: Prints this help message and exits"
 	echo "    -f|--force: ignore type checks of the setting to set, set it anyway"
 	echo "    -r|--reset: Reset all settings to their default."
