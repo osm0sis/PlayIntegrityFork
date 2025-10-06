@@ -11,6 +11,7 @@
 # Unknown PIF module: 3
 
 # Main "global" variables
+interactive=1
 changed=0
 ModuleDir="/data/adb/modules/playintegrityfix/" # Fallback
 knownSettings=( spoofBuild,bool,1 \
@@ -56,7 +57,7 @@ function getSetting() { # setting
 function setSetting() { # setting value( empty for default )
 	good=0
 	for i in ${!knownSettings[@]}; do
-		if [[ "$1" == "${knownSettings[$i]}"* ]]; then good=1; break; fi
+		if [[ -n $( grep "$1" <<< "${knownSettings[$i]}" ) ]]; then good=1; break; fi
 	done
 
 	if [[ "$good" -ne 1 ]]; then
@@ -78,12 +79,12 @@ function setSetting() { # setting value( empty for default )
 
 	if [[ "$forceSet" -ne 1 && -n "$2" ]]; then # Force mode / type check
 		if [[ "$( cut -d, -f2 <<< ${knownSettings[$i]} )" == "bool" && \
-					-z "$( grep -x '^[0-1]$' <<< $2 )" ]]; then
+				-z "$( grep -x '^[0-1]$' <<< $2 )" ]]; then
 			echo "$1 only accepts 0 or 1. Skipping..."
 			echo ""
 			return
 		elif [[ "$( cut -d, -f2 <<< ${knownSettings[$i]} )" == "int" && \
-					-z "$( grep -x '.[0-9]$' <<< $2 )" ]]; then
+				-z "$( grep -x -e '.[0-9]$' -e '^[0-9]$' <<< $2 )" ]]; then
 			echo "$1 only accepts intergers. Skipping..."
 			echo ""
 			return
@@ -124,7 +125,6 @@ if [[ -z "$mainFile" ]]; then errOut 2 "custom.pif.prop or .json not found!\nIs 
 
 # Use migrate.sh -f -a to add missing advanced settings
 for opt in ${knownSettings[@]}; do
-	echo $( grep "$( cut -d, -f1 <<< $opt )" "$mainFile" )
 	if [[ -z $( grep "$( cut -d, -f1 <<< $opt )" "$mainFile" ) ]]; then
 		echo "One or more advanced options missing from $mainFile."
 		echo "Executing migrate.sh -f -a to add them."
@@ -135,10 +135,9 @@ done
 
 # Input Handling
 selection=()
-interactive=1
 while [[ -n "$1" ]]; do
 	case "$1" in
-		-h|--help|-?) usage; exit 0;;
+		-h|--help)  usage; exit 0;;
 		-f|--force) forceSet=1; shift;;
 		-r|--reset)
 			interactive=0
@@ -154,7 +153,8 @@ while [[ -n "$1" ]]; do
 		*)  selection+=( "$1" ); shift;;
 	esac
 done
-if [[ "$interactive" -ne 1 ]]; then
+
+if [[ "$interactive" -eq 1 ]]; then
 
 # Interactive selection
 if [[ $forceSet -eq 1 ]]; then echo "Force mode enabled."; fi
@@ -167,7 +167,7 @@ if [[ ${#selection[@]} -eq 0 ]]; then
 	done
 	while [[ -z "$entered" ]]; do
 		read -p 'Enter your selection [0-'"$i"']: ' entered
-		if [[ -z $( grep -x '.[0-9]$' <<< "$entered" ) || \
+		if [[ -z $( grep -x -e '.[0-9]$' -e '^[0-9]$' <<< "$entered" ) || \
 					$entered -lt 0 || $entered -gt $i ]]; then
 			echo 'Invalid input, must be within [0-'"$i"']'
 			echo ""
@@ -178,7 +178,7 @@ if [[ ${#selection[@]} -eq 0 ]]; then
 fi
 
 for option in ${selection[@]}; do
-	echo "$option selected ( current value: $( getSetting $option ), default: $( cut -d, -f3 <<< ${knownSettings[$entered]} )"
+	echo "$option selected ( current value: $( getSetting $option ), default: $( cut -d, -f3 <<< ${knownSettings[$entered]} ) )"
 	read -p "Enter new value: " inputValue
 	setSetting "$option" "$inputValue"
 done
