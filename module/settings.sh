@@ -3,12 +3,15 @@
 # Written by Vagelis1608 @xda
 # For PIFork by osm0sis @xda
 
+# Set advanced settings in PIFork
+
 # On error, exits with code:
 # Not running as root: 1
 # custom.pif.{prop|json} not found: 2
 # Unknown PIF module: 3
 
 # Main "global" variables
+changed=0
 ModuleDir="/data/adb/modules/playintegrityfix/" # Fallback
 knownSettings=( spoofBuild,bool,1 \
 				spoofProps,bool,1 \
@@ -92,10 +95,12 @@ function setSetting() { # setting value( empty for default )
 
 	echo "Setting $1 from $( getSetting $1 ) to $value in $mainFile"
 	if [[ "$mainFile" == *".prop" ]]; then
-		sed -i.old "/$1/s!=.*\n!=$value\n!g" "$mainFile"
+		sed -i.old "/$1/s!=.*!=$value!g" "$mainFile"
 	else
 		sed -i.old "/$1/s!: \".*\"!: \"$value\"!g" "$mainFile"
 	fi
+
+	changed=1
 }
 
 # Root check
@@ -119,7 +124,8 @@ if [[ -z "$mainFile" ]]; then errOut 2 "custom.pif.prop or .json not found!\nIs 
 
 # Use migrate.sh -f -a to add missing advanced settings
 for opt in ${knownSettings[@]}; do
-	if [[ -z $( grep "$( cut -d, -f1 <<< $opt )" "$mainFile" ]]; then
+	echo $( grep "$( cut -d, -f1 <<< $opt )" "$mainFile" )
+	if [[ -z $( grep "$( cut -d, -f1 <<< $opt )" "$mainFile" ) ]]; then
 		echo "One or more advanced options missing from $mainFile."
 		echo "Executing migrate.sh -f -a to add them."
 		sh "${mainFile%\/*}/migrate.sh" -f -a
@@ -140,6 +146,7 @@ while [[ -n "$1" ]]; do
 				setSetting "$( cut -d, -f1 <<< $opt )"
 			done
 			shift;;
+		'-'*) echo "Warning: Ignoring unknown flag: $1"; shift;;
 		*'='*)
 			interactive=0
 			setSetting "${1%=*}" "${1#*=}"
@@ -147,9 +154,11 @@ while [[ -n "$1" ]]; do
 		*)  selection+=( "$1" ); shift;;
 	esac
 done
-if [[ "$interactive" -ne 1 ]]; then exit 0; fi
+if [[ "$interactive" -ne 1 ]]; then
 
 # Interactive selection
+if [[ $forceSet -eq 1 ]]; then echo "Force mode enabled."; fi
+
 if [[ ${#selection[@]} -eq 0 ]]; then
 	entered=""
 	echo "Available advanced settings:"
@@ -173,3 +182,10 @@ for option in ${selection[@]}; do
 	read -p "Enter new value: " inputValue
 	setSetting "$option" "$inputValue"
 done
+
+fi # Interactive mode
+
+if [[ $changed -eq 1 ]]; then
+	echo "Executing killpi.sh to apply changes"
+	sh "${mainFile%\/*}/killpi.sh"
+fi
