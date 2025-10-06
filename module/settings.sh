@@ -30,6 +30,7 @@ function usage() {
 	echo "    -h|--help: Prints this help message and exits"
 	echo "    -f|--force: ignore type checks of the setting to set, set it anyway"
 	echo "    -r|--reset: Reset all settings to their default."
+	echo "    -l|--list: List all current values and exit."
 	echo "    Providing a Setting name without setting a value ( no = ) will take you to the interactive value selection."
 	echo "    Empty value ( setting= ) resets the default value"
 	echo "    Running without providing a setting triggers interactive mode, allowing you to select the setting you want from a list."
@@ -149,6 +150,13 @@ while [[ -n "$1" ]]; do
 				setSetting "$( cut -d, -f1 <<< $opt )"
 			done
 			shift;;
+		-l|--list)
+			for i in ${!knownSettings[@]}; do
+				printSet="$( cut -d, -f1 <<< ${knownSettings[$i]} )"
+				echo "$printSet"': '"$( getSetting $printSet )"
+			done
+			printNames
+			exit 0;;
 		'-'*) echo "Warning: Ignoring unknown flag: $1"; shift;;
 		*'='*)
 			interactive=0
@@ -168,7 +176,7 @@ if [[ ${#selection[@]} -eq 0 ]]; then
 	echo "Available advanced settings:"
 	for i in ${!knownSettings[@]}; do
 		printSet="$( cut -d, -f1 <<< ${knownSettings[$i]} )"
-		echo "${i}"': '"$printSet"' ( current value: '"$( getSetting $printSet )"
+		echo "${i}"': '"$printSet"' ( current value: '"$( getSetting $printSet ) )"
 	done
 	echo "r: Reset all Advanced Settings to default values."
 	echo "e: Exit script."
@@ -180,7 +188,7 @@ if [[ ${#selection[@]} -eq 0 ]]; then
 		# Reset mode
 		if [[ -n $( grep -ix -e 'r' -e 'reset' <<< "$entered" ) ]]; then
 			read -p "All advanced settings will be reset to their default values.\nAre you sure?(y/n) " confirmReset
-			if [[ -n $( grep -ix -e 'y' -e 'yes' <<< "$confirmReset" ]]; then
+			if [[ -n $( grep -ix -e 'y' -e 'yes' <<< "$confirmReset" ) ]]; then
 				for opt in ${knownSettings[@]}; do
                 	setSetting "$( cut -d, -f1 <<< $opt )"
 	            done
@@ -192,8 +200,8 @@ if [[ ${#selection[@]} -eq 0 ]]; then
 		# Exit
 		if [[ -n $( grep -ix -e 'e' -e 'exit' <<< "$entered" ) ]]; then
 			echo "Exiting..."
-			printNames
-			exit 0
+			entered="e"
+			break
 		fi
 
 		if [[ -z $( grep -x -e '.[0-9]$' -e '^[0-9]$' <<< "$entered" ) || \
@@ -203,12 +211,15 @@ if [[ ${#selection[@]} -eq 0 ]]; then
 			entered=""
 		fi
 	done
-	selection+=( "$( cut -d, -f1 <<< ${knownSettings[$entered]} )" )
+
+	if [[ "$entered" != "e" ]]; then
+		selection+=( "$( cut -d, -f1 <<< ${knownSettings[$entered]} )" )
+	fi
 fi
 
 for option in ${selection[@]}; do
 	echo "$option selected ( current value: $( getSetting $option ), default: $( cut -d, -f3 <<< ${knownSettings[$entered]} ) )"
-	read -p "Enter new value: " inputValue
+	read -p "Enter new value ( empty to reset to default ): " inputValue
 	setSetting "$option" "$inputValue"
 done
 
