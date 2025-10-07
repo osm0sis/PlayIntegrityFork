@@ -6,7 +6,7 @@ android {
     namespace = "es.chiteroman.playintegrityfix"
     compileSdk = 36
     ndkVersion = "28.2.13676358"
-    buildToolsVersion = "36.0.0"
+    buildToolsVersion = "36.1.0"
 
     buildFeatures {
         prefab = true
