@@ -196,10 +196,12 @@ if [ "$DIR" = /data/adb/modules/playintegrityfix/autopif2 ]; then
   else
     NEWNAME="pif.prop";
   fi;
-  if [ -f "../$NEWNAME" ]; then
-    item "Renaming old file to $NEWNAME.bak ...";
-    mv -fv ../$NEWNAME ../$NEWNAME.bak;
-  fi;
+  for OLDPIF in $NEWNAME custom.pif.json; do
+    if [ -f "../$OLDPIF" ]; then
+      item "Renaming old file to $OLDPIF.bak ...";
+      mv -fv ../$OLDPIF ../$OLDPIF.bak;
+    fi;
+  done;
   item "Installing new prop ...";
   cp -fv $NEWNAME ..;
   TS_DIR=/data/adb/tricky_store;
