@@ -1,4 +1,4 @@
-#!/system/bin/bash
+#!/system/bin/sh
 
 # Written by Vagelis1608 @xda
 # For PIFork by osm0sis @xda
@@ -183,11 +183,13 @@ if [[ ${#selection[@]} -eq 0 ]]; then
 	echo ""
 
 	while [[ -z "$entered" ]]; do
-		read -p 'Enter your selection [0-'"$i"']: ' entered
+		echo -n 'Enter your selection [0-'"$i"']: '
+		read entered
 
 		# Reset mode
 		if [[ -n $( grep -ix -e 'r' -e 'reset' <<< "$entered" ) ]]; then
-			read -p "All advanced settings will be reset to their default values.\nAre you sure?(y/n) " confirmReset
+			echo -ne "All advanced settings will be reset to their default values.\nAre you sure?(y/n) "
+			read confirmReset
 			if [[ -n $( grep -ix -e 'y' -e 'yes' <<< "$confirmReset" ) ]]; then
 				for opt in ${knownSettings[@]}; do
                 	setSetting "$( cut -d, -f1 <<< $opt )"
@@ -219,7 +221,8 @@ fi
 
 for option in ${selection[@]}; do
 	echo "$option selected ( current value: $( getSetting $option ), default: $( cut -d, -f3 <<< ${knownSettings[$entered]} ) )"
-	read -p "Enter new value ( empty to reset to default ): " inputValue
+	echo -n "Enter new value ( empty to reset to default ): "
+	read inputValue
 	setSetting "$option" "$inputValue"
 done
 
