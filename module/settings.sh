@@ -64,7 +64,7 @@ function getSetting() { # setting
 function setSetting() { # setting value( empty for default )
 	good=0
 	for i in ${!knownSettings[@]}; do
-		if [[ -n $( grep "$1" <<< "${knownSettings[$i]}" ) ]]; then good=1; break; fi
+		if [[ -n $( echo -n "${knownSettings[$i]}" | grep "$1" ) ]]; then good=1; break; fi
 	done
 
 	if [[ "$good" -ne 1 ]]; then
@@ -83,13 +83,13 @@ function setSetting() { # setting value( empty for default )
 	fi
 
 	if [[ "$forceSet" -ne 1 && -n "$2" ]]; then # Force mode / type check
-		if [[ "$( cut -d, -f2 <<< ${knownSettings[$i]} )" == "bool" && \
-				-z "$( grep -x '^[0-1]$' <<< $2 )" ]]; then
+		if [[ "$( echo -n ${knownSettings[$i]} | cut -d, -f2 )" == "bool" && \
+				-z "$( echo -n $2 | grep -x '^[0-1]$' )" ]]; then
 			echo "$1 only accepts 0 or 1. Skipping..."
 			echo ""
 			return
-		elif [[ "$( cut -d, -f2 <<< ${knownSettings[$i]} )" == "int" && \
-				-z "$( grep -x -e '.[0-9]$' -e '^[0-9]$' <<< $2 )" ]]; then
+		elif [[ "$( echo -n ${knownSettings[$i]} | cut -d, -f2 )" == "int" && \
+				-z "$( echo -n $2 | grep -x -e '.[0-9]$' -e '^[0-9]$' )" ]]; then
 			echo "$1 only accepts intergers. Skipping..."
 			echo ""
 			return
@@ -97,7 +97,7 @@ function setSetting() { # setting value( empty for default )
 	fi
 
 	if [[ -n "$2" ]]; then value="$2"
-	else value="$( cut -d, -f3 <<< ${knownSettings[$i]} )"; fi
+	else value="$( echo -n ${knownSettings[$i]} | cut -d, -f3 )"; fi
 
 	echo "Setting $1 from $( getSetting $1 ) to $value in $mainFile"
 	if [[ "$mainFile" == *".prop" ]]; then
@@ -130,7 +130,7 @@ if [[ -z "$mainFile" ]]; then errOut 2 "custom.pif.prop or .json not found!\nIs 
 
 # Use migrate.sh -f -a to add missing advanced settings
 for opt in ${knownSettings[@]}; do
-	if [[ -z $( grep "$( cut -d, -f1 <<< $opt )" "$mainFile" ) ]]; then
+	if [[ -z $( grep "$( echo -n $opt | cut -d, -f1 )" "$mainFile" ) ]]; then
 		echo "One or more advanced options missing from $mainFile."
 		echo "Executing migrate.sh -f -a to add them."
 		sh "${mainFile%\/*}/migrate.sh" -f -a
@@ -147,8 +147,8 @@ if [[ -e "${mainFile%\/*}/example.pif.prop" ]]; then
 				"$examplePif" ) )
 
 	for opttest in ${ePS[@]}; do
-		if [[ -z $( grep "$( cut -d= -f1 <<< $opttest )" <<< "${knownSettings[@]}" ) ]]; then
-			knownSettings+=( "$( cut -d= -f1 <<< $opttest )"',unk,'"$( cut -d= -f2 <<< $opttest )" )
+		if [[ -z $( echo "${knownSettings[@]}" | grep "$( echo -n $opttest | cut -d= -f1 )" ) ]]; then
+			knownSettings+=( "$( echo -n $opttest | cut -d= -f1 )"',unk,'"$( echo -n $opttest | cut -d= -f2 )" )
 		fi
 	done
 elif [[ -e "${mainFile%\/*}/example.pif.json" ]]; then
@@ -159,7 +159,7 @@ elif [[ -e "${mainFile%\/*}/example.pif.json" ]]; then
 				"$examplePif" | cut -d: -f1 | tr -d ',\"\t ' ) )
 
 	for opttest in ${ePS[@]}; do
-		if [[ -z $( grep "$opttest" <<< "${knownSettings[@]}" ) ]]; then
+		if [[ -z $( echo -n "${knownSettings[@]}" | grep "$opttest" ) ]]; then
 			knownSettings+=( "$opttest"',unk,'$( grep $opttest $examplePif | \
 									cut -d: -f2 | tr -d ',\"\t ' ) )
 		fi
@@ -175,12 +175,12 @@ while [[ -n "$1" ]]; do
 		-r|--reset)
 			interactive=0
 			for opt in ${knownSettings[@]}; do
-				setSetting "$( cut -d, -f1 <<< $opt )"
+				setSetting "$( echo -n $opt | cut -d, -f1 )"
 			done
 			shift;;
 		-l|--list)
 			for i in ${!knownSettings[@]}; do
-				printSet="$( cut -d, -f1 <<< ${knownSettings[$i]} )"
+				printSet="$( echo -n ${knownSettings[$i]} | cut -d, -f1 )"
 				echo "$printSet"': '"$( getSetting $printSet )"
 			done
 			printNames
@@ -203,7 +203,7 @@ if [[ ${#selection[@]} -eq 0 ]]; then
 	entered=""
 	echo "Available advanced settings:"
 	for i in ${!knownSettings[@]}; do
-		printSet="$( cut -d, -f1 <<< ${knownSettings[$i]} )"
+		printSet="$( echo -n ${knownSettings[$i]} | cut -d, -f1 )"
 		echo "${i}"': '"$printSet"' ( current value: '"$( getSetting $printSet ) )"
 	done
 	echo "r: Reset all Advanced Settings to default values."
@@ -215,12 +215,12 @@ if [[ ${#selection[@]} -eq 0 ]]; then
 		read entered
 
 		# Reset mode
-		if [[ -n $( grep -ix -e 'r' -e 'reset' <<< "$entered" ) ]]; then
+		if [[ -n $( echo -n "$entered" | grep -ix -e 'r' -e 'reset' ) ]]; then
 			echo -ne "All advanced settings will be reset to their default values.\nAre you sure?(y/n) "
 			read confirmReset
-			if [[ -n $( grep -ix -e 'y' -e 'yes' <<< "$confirmReset" ) ]]; then
+			if [[ -n $( echo -n "$confirmReset" | grep -ix -e 'y' -e 'yes' ) ]]; then
 				for opt in ${knownSettings[@]}; do
-                	setSetting "$( cut -d, -f1 <<< $opt )"
+                	setSetting "$( echo -n $opt | cut -d, -f1 )"
 	            done
 				echo "Done!"
 			fi
@@ -228,13 +228,13 @@ if [[ ${#selection[@]} -eq 0 ]]; then
 		fi
 
 		# Exit
-		if [[ -n $( grep -ix -e 'e' -e 'exit' <<< "$entered" ) ]]; then
+		if [[ -n $( echo -n "$entered" | grep -ix -e 'e' -e 'exit' ) ]]; then
 			echo "Exiting..."
 			entered="e"
 			break
 		fi
 
-		if [[ -z $( grep -x -e '.[0-9]$' -e '^[0-9]$' <<< "$entered" ) || \
+		if [[ -z $( echo -n "$entered" | grep -x -e '.[0-9]$' -e '^[0-9]$' ) || \
 					$entered -lt 0 || $entered -gt $i ]]; then
 			echo 'Invalid input, must be within [0-'"$i"', e, r]'
 			echo ""
@@ -242,14 +242,14 @@ if [[ ${#selection[@]} -eq 0 ]]; then
 		fi
 	done
 
-	if [[ -z $( grep -ix -e 'e' -e 'exit' <<< "$entered" ) ]]; then
-		selection+=( "$( cut -d, -f1 <<< ${knownSettings[$entered]} )" )
+	if [[ "$entered" != "e" ]]; then
+		selection+=( "$( echo -n ${knownSettings[$entered]} | cut -d, -f1 )" )
 	fi
 fi
 
 # Interactive Value Selection
 for option in ${selection[@]}; do
-	echo "$option selected ( current value: $( getSetting $option ), default: $( cut -d, -f3 <<< ${knownSettings[$entered]} ) )"
+	echo "$option selected ( current value: $( getSetting $option ), default: $( echo -n ${knownSettings[$entered]} | cut -d, -f3 ) )"
 	echo -n "Enter new value ( empty to reset to default ): "
 	read inputValue
 	setSetting "$option" "$inputValue"
