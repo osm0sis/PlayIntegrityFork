@@ -91,7 +91,7 @@ Must be run as root!
     Running without providing a setting triggers interactive mode, allowing you to select the setting you want from a list.
     
 
-A script by Vagelis1608 @xda for PIFork by osm0sis @xda
+A script by Vagelis1608 @ xda for PIFork by osm0sis @ xda
 
 ## Troubleshooting
 
