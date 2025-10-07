@@ -138,7 +138,35 @@ for opt in ${knownSettings[@]}; do
 	fi
 done
 
-# Input Handling
+# Look for new/undefined Advanced Settings
+if [[ -e "${mainFile%\/*}/example.pif.prop" ]]; then
+	examplePif="${mainFile%\/*}/example.pif.prop"
+
+	ePS=( $( tail -n $(( $( wc -l < "$examplePif" ) - \
+				$( grep -n -m 1 'Advanced Settings' "$examplePif" | cut -d: -f1 ) )) \
+				"$examplePif" ) )
+
+	for opttest in ${ePS[@]}; do
+		if [[ -z $( grep "$( cut -d= -f1 <<< $opttest )" <<< "${knownSettings[@]}" ) ]]; then
+			knownSettings+=( "$( cut -d= -f1 <<< $opttest )"',unk,'"$( cut -d= -f2 <<< $opttest )" )
+		fi
+	done
+elif [[ -e "${mainFile%\/*}/example.pif.json" ]]; then
+	examplePif="${mainFile%\/*}/example.pif.json"
+
+	ePS=( $( tail -n $(( $( wc -l < "$examplePif" ) - \
+				$( grep -n -m 1 'Advanced Settings' "$examplePif" | cut -d: -f1 ) )) \
+				"$examplePif" | cut -d: -f1 | tr -d ',\"\t ' ) )
+
+	for opttest in ${ePS[@]}; do
+		if [[ -z $( grep "$opttest" <<< "${knownSettings[@]}" ) ]]; then
+			knownSettings+=( "$opttest"',unk,'$( grep $opttest $examplePif | \
+									cut -d: -f2 | tr -d ',\"\t ' ) )
+		fi
+	done
+fi
+
+# Flag Handling
 selection=()
 while [[ -n "$1" ]]; do
 	case "$1" in
@@ -168,9 +196,9 @@ done
 
 if [[ "$interactive" -eq 1 ]]; then
 
-# Interactive selection
 if [[ $forceSet -eq 1 ]]; then echo "Force mode enabled."; fi
 
+# Interactive Setting Selection
 if [[ ${#selection[@]} -eq 0 ]]; then
 	entered=""
 	echo "Available advanced settings:"
@@ -183,7 +211,7 @@ if [[ ${#selection[@]} -eq 0 ]]; then
 	echo ""
 
 	while [[ -z "$entered" ]]; do
-		echo -n 'Enter your selection [0-'"$i"']: '
+		echo -n 'Enter your selection [0-'"$i"', e, r]: '
 		read entered
 
 		# Reset mode
@@ -208,7 +236,7 @@ if [[ ${#selection[@]} -eq 0 ]]; then
 
 		if [[ -z $( grep -x -e '.[0-9]$' -e '^[0-9]$' <<< "$entered" ) || \
 					$entered -lt 0 || $entered -gt $i ]]; then
-			echo 'Invalid input, must be within [0-'"$i"']'
+			echo 'Invalid input, must be within [0-'"$i"', e, r]'
 			echo ""
 			entered=""
 		fi
@@ -219,6 +247,7 @@ if [[ ${#selection[@]} -eq 0 ]]; then
 	fi
 fi
 
+# Interactive Value Selection
 for option in ${selection[@]}; do
 	echo "$option selected ( current value: $( getSetting $option ), default: $( cut -d, -f3 <<< ${knownSettings[$entered]} ) )"
 	echo -n "Enter new value ( empty to reset to default ): "
