@@ -12,7 +12,7 @@
 
 # Main "global" variables
 interactive=1
-changed=0
+changed=0 # killpi.sh trigger
 ModuleDir="/data/adb/modules/playintegrityfix/" # Fallback
 knownSettings=( spoofBuild,bool,1 \
 				spoofProps,bool,1 \
@@ -242,7 +242,7 @@ if [[ ${#selection[@]} -eq 0 ]]; then
 		fi
 	done
 
-	if [[ "$entered" != "e" ]]; then
+	if [[ -z $( grep -ix -e 'e' -e 'exit' <<< "$entered" ) ]]; then
 		selection+=( "$( cut -d, -f1 <<< ${knownSettings[$entered]} )" )
 	fi
 fi
