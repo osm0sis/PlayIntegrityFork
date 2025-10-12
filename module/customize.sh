@@ -13,6 +13,7 @@ if [ -f /data/adb/modules/playintegrityfix/scripts-only-mode ]; then
         /data/adb/modules/playintegrityfix/custom.app_replace_list.txt \
         /data/adb/modules/playintegrityfix/custom.pif.json \
         /data/adb/modules/playintegrityfix/custom.pif.prop \
+        /data/adb/modules/playintegrityfix/skippersistprop \
         /data/adb/modules/playintegrityfix/system \
         /data/adb/modules/playintegrityfix/uninstall.sh
 fi
@@ -24,7 +25,7 @@ if [ -d /data/adb/modules/playintegrityfix/system ]; then
 fi
 
 # Copy any supported custom files to updated module
-for FILE in custom.app_replace_list.txt custom.pif.json custom.pif.prop skipdelprop uninstall.sh; do
+for FILE in custom.app_replace_list.txt custom.pif.json custom.pif.prop skipdelprop skippersistprop uninstall.sh; do
     if [ -f "/data/adb/modules/playintegrityfix/$FILE" ]; then
         ui_print "- Restoring $FILE"
         cp -af /data/adb/modules/playintegrityfix/$FILE $MODPATH/$FILE

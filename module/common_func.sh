@@ -8,6 +8,9 @@ delprop_if_exist() {
     [ -n "$(resetprop "$NAME")" ] && resetprop --delete "$NAME"
 }
 
+SKIPPERSISTPROP=false
+[ -f "$MODPATH/skippersistprop" ] && SKIPPERSISTPROP=true
+
 # persistprop <prop name> <new value>
 persistprop() {
     local NAME="$1"
