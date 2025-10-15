@@ -96,8 +96,8 @@ OTA_LIST="$(grep 'ota/.*_beta' PIXEL_OTA_HTML | cut -d\" -f2)";
 
 if [ "$FORCE_MATCH" ]; then
   DEVICE="$(getprop ro.product.device)";
-  case "$PRODUCT_LIST" in
-    *${DEVICE}_beta*)
+  case "$(echo ' '$PRODUCT_LIST' ')" in
+    *" ${DEVICE}_beta "*)
       MODEL="$(getprop ro.product.model)";
       PRODUCT="${DEVICE}_beta";
       OTA="$(echo "$OTA_LIST" | grep "$PRODUCT")";
