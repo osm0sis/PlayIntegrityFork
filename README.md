@@ -27,7 +27,7 @@ The module is configured by editing json/list (text) files in the module directo
 
 ### About 'custom.pif.json' file
 
-You can fill out the included template [example.pif.json](https://raw.githubusercontent.com/osm0sis/PlayIntegrityFork/main/module/example.pif.json) then rename it to custom.pif.json to spoof your own custom values. It will be used instead of any included pif.json (none included currently).
+You can fill out the included template [example.pif.json](https://raw.githubusercontent.com/osm0sis/PlayIntegrityFork/refs/tags/v14/module/example.pif.json) then rename it to custom.pif.json to spoof your own custom values. It will be used instead of any included pif.json (none included currently).
 
 Note this is just a template with the current suggested default entries, but with this fork you can include as few or as many android.os.Build class fields and Android system properties as needed to pass DEVICE integrity now and in the future if the checks enforced by Play Integrity change.
 
