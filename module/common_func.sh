@@ -85,3 +85,13 @@ resetprop_if_match() {
 if [ "$(getprop sys.boot_completed)" != "1" ]; then
     ui_print() { return; }
 fi
+
+# Add package (and optional process) to the Magisk denylist if it's not already present
+add_if_missing() {
+    pkg="$1"; proc="$2"
+    entry="$pkg|${proc:-$pkg}"
+    if ! magisk --denylist ls | grep -q "$entry"; then
+        magisk --denylist add "$pkg" $proc
+        ui_print "[AutoDeny] Added $entry"
+    fi
+}
