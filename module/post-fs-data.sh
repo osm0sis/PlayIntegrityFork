@@ -11,8 +11,11 @@ if [ -d "$MODPATH/zygisk" ]; then
     . $MODPATH/common_setup.sh
 else
     # Add Play Services DroidGuard and Play Store processes to Magisk DenyList for better results in scripts-only mode
-    magisk --denylist add com.google.android.gms com.google.android.gms.unstable
-    magisk --denylist add com.android.vending
+    if [ -d "/data/adb/magisk" ]; then
+        add_if_missing com.google.android.gms
+        add_if_missing com.google.android.gms com.google.android.gms.unstable
+        add_if_missing com.android.vending
+    fi
 fi
 
 # Conditional early sensitive properties
