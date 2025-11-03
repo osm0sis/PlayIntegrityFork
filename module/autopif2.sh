@@ -13,7 +13,7 @@ until [ -z "$1" ]; do
   case "$1" in
     -h|--help|help) echo "sh autopif2.sh [-a|-s] [-m] [-t #] [-d #]"; exit 0;;
     -a|--advanced|advanced) ARGS="-a"; shift;;
-    -s|--strong|strong) FORCE_STRONG=1; shift;;
+    -s|--strong|strong) ARGS="-a"; PATCH_COMMENT=1; spoofProvider=0; shift;;
     -m|--match|match) FORCE_MATCH=1; shift;;
     -t|--top|top) echo "$2" | grep -q '^[1-9]$' || exit 1; FORCE_TOP=$2; shift 2;;
     -d|--depth|depth) echo "$2" | grep -q '^[1-9]$' || exit 1; FORCE_DEPTH=$2; shift 2;;
@@ -21,7 +21,7 @@ until [ -z "$1" ]; do
   esac;
 done;
 
-echo "Pixel Beta pif.prop generator script \
+echo "Pixel Beta pif.json generator script \
   \n  by osm0sis @ xda-developers";
 
 case "$0" in
@@ -80,9 +80,9 @@ fi;
 cd "$DIR";
 
 item "Crawling Android Developers for latest Pixel Beta ...";
-wget -q -O PIXEL_VERSIONS_HTML --no-check-certificate https://developer.android.com/about/versions 2>&1 || exit 1;
-wget -q -O PIXEL_LATEST_HTML --no-check-certificate $(grep -o 'https://developer.android.com/about/versions/.*[0-9]"' PIXEL_VERSIONS_HTML | sort -ru | cut -d\" -f1 | head -n$FORCE_TOP | tail -n1) 2>&1 || exit 1;
-wget -q -O PIXEL_OTA_HTML --no-check-certificate https://developer.android.com$(grep -o 'href=".*download-ota.*"' PIXEL_LATEST_HTML | grep 'qpr' | cut -d\" -f2 | head -n$FORCE_DEPTH | tail -n1) 2>&1 || exit 1;
+/system/bin/curl -L -s -o PIXEL_VERSIONS_HTML --insecure https://developer.android.com/about/versions 2>&1 || exit 1;
+/system/bin/curl -L -s -o PIXEL_LATEST_HTML --insecure $(grep -o 'https://developer.android.com/about/versions/.*[0-9]"' PIXEL_VERSIONS_HTML | sort -ru | cut -d\" -f1 | head -n$FORCE_TOP | tail -n1) 2>&1 || exit 1;
+/system/bin/curl -L -s -o PIXEL_OTA_HTML --insecure https://developer.android.com$(grep -o 'href=".*download-ota.*"' PIXEL_LATEST_HTML | grep 'qpr' | cut -d\" -f2 | head -n$FORCE_DEPTH | tail -n1) 2>&1 || exit 1;
 echo "$(grep -m1 -oE 'tooltip>Android .*[0-9]' PIXEL_OTA_HTML | cut -d\> -f2) $(grep -oE 'tooltip>QPR.* Beta' PIXEL_OTA_HTML | cut -d\> -f2 | head -n$FORCE_DEPTH | tail -n1)";
 
 BETA_REL_DATE="$(date -D '%B %e, %Y' -d "$(grep -m1 -A1 'Release date' PIXEL_OTA_HTML | tail -n1 | sed 's;.*<td>\(.*\)</td>.*;\1;')" '+%Y-%m-%d')";
@@ -96,8 +96,8 @@ OTA_LIST="$(grep 'ota/.*_beta' PIXEL_OTA_HTML | cut -d\" -f2)";
 
 if [ "$FORCE_MATCH" ]; then
   DEVICE="$(getprop ro.product.device)";
-  case "$(echo ' '$PRODUCT_LIST' ')" in
-    *" ${DEVICE}_beta "*)
+  case "$PRODUCT_LIST" in
+    *${DEVICE}_beta*)
       MODEL="$(getprop ro.product.model)";
       PRODUCT="${DEVICE}_beta";
       OTA="$(echo "$OTA_LIST" | grep "$PRODUCT")";
@@ -122,7 +122,7 @@ if [ -z "$PRODUCT" ]; then
 fi;
 echo "$MODEL ($PRODUCT)";
 
-(ulimit -f 2; wget -q -O PIXEL_ZIP_METADATA --no-check-certificate $OTA) 2>/dev/null;
+(ulimit -f 2; /system/bin/curl -L -s -o PIXEL_ZIP_METADATA --insecure "$OTA") 2>/dev/null;
 FINGERPRINT="$(grep -am1 'post-build=' PIXEL_ZIP_METADATA 2>/dev/null | cut -d= -f2)";
 SECURITY_PATCH="$(grep -am1 'security-patch-level=' PIXEL_ZIP_METADATA 2>/dev/null | cut -d= -f2)";
 if [ -z "$FINGERPRINT" -o -z "$SECURITY_PATCH" ]; then
@@ -133,82 +133,63 @@ if [ -z "$FINGERPRINT" -o -z "$SECURITY_PATCH" ]; then
   exit 1;
 fi;
 
-item "Dumping values to minimal pif.prop ...";
-cat <<EOF | tee pif.prop;
-MANUFACTURER=Google
-MODEL=$MODEL
-FINGERPRINT=$FINGERPRINT
-PRODUCT=$PRODUCT
-DEVICE=$DEVICE
-SECURITY_PATCH=$SECURITY_PATCH
-DEVICE_INITIAL_SDK_INT=32
+item "Dumping values to minimal pif.json ...";
+cat <<EOF | tee pif.json;
+{
+  "MANUFACTURER": "Google",
+  "MODEL": "$MODEL",
+  "FINGERPRINT": "$FINGERPRINT",
+  "PRODUCT": "$PRODUCT",
+  "DEVICE": "$DEVICE",
+  "SECURITY_PATCH": "$SECURITY_PATCH",
+  "DEVICE_INITIAL_SDK_INT": "32"
+}
 EOF
 
 for MIGRATE in migrate.sh /data/adb/modules/playintegrityfix/migrate.sh; do
   [ -f "$MIGRATE" ] && break; 
 done;
 if [ -f "$MIGRATE" ]; then
-  for OLDPIF in /data/adb/modules/playintegrityfix/custom.pif.prop /data/adb/modules/playintegrityfix/custom.pif.json; do
-    [ -f "$OLDPIF" ] && break;
-  done;
-  if [ -f "$OLDPIF" ]; then
-    grep -q '//"\*.security_patch"' $OLDPIF && PATCH_COMMENT=1;
-    grep -q '#\*.security_patch' $OLDPIF && PATCH_COMMENT=1;
-    grep -qE "verboseLogs|VERBOSE_LOGS" $OLDPIF && ARGS="-a";
-  else
-    FORCE_STRONG=1;
+  OLDJSON=/data/adb/modules/playintegrityfix/custom.pif.json;
+  if [ -f "$OLDJSON" ]; then
+    grep -q '//"\*.security_patch"' $OLDJSON && PATCH_COMMENT=1;
+    grep -qE "verboseLogs|VERBOSE_LOGS" $OLDJSON && ARGS="-a";
   fi;
-  if [ "$FORCE_STRONG" ]; then
-    item "Forcing configuration for <A13 PI Strong ...";
-    ARGS="-a"; PATCH_COMMENT=1; spoofProvider=0;
-  else
-    item "Retaining existing configuration ...";
-  fi;
-  [ -d /data/adb/tricky_store ] && unset PATCH_COMMENT;
-  item "Converting pif.prop to custom.pif.prop with migrate.sh:";
-  rm -f pif.json custom.pif.json custom.pif.prop;
-  sh $MIGRATE -i $ARGS pif.prop;
+  [ -f /data/adb/tricky_store/security_patch.txt ] && unset PATCH_COMMENT;
+  item "Converting pif.json to custom.pif.json with migrate.sh:";
+  rm -f custom.pif.json;
+  sh $MIGRATE -i $ARGS pif.json;
   if [ -n "$ARGS" ]; then
-    grep_config() {
-      if [ -f "$2" ]; then
-        case $2 in
-          *.json) grep -m1 "$1" $2 | cut -d\" -f4;;
-          *.prop) grep -m1 "$1=" "$2" | cut -d= -f2 | cut -d\# -f1 | sed 's/[[:space:]]*$//';;
-        esac;
-      fi;
-    }
-    verboseLogs=$(grep_config "VERBOSE_LOGS" $OLDPIF);
-    ADVSETTINGS="spoofBuild spoofProps spoofProvider spoofSignature spoofVendingFinger spoofVendingSdk verboseLogs";
+    [ "$spoofProvider" ] && item "Forcing configuration for <A13 PI Strong ...";
+    grep_json() { [ -f "$2" ] && grep -m1 "$1" $2 | cut -d\" -f4; }
+    verboseLogs=$(grep_json "VERBOSE_LOGS" $OLDJSON);
+    ADVSETTINGS="spoofBuild spoofProps spoofProvider spoofSignature spoofVendingSdk verboseLogs";
     for SETTING in $ADVSETTINGS; do
-      eval [ -z \"\$$SETTING\" ] \&\& $SETTING=$(grep_config "$SETTING" $OLDPIF);
+      eval [ -z \"\$$SETTING\" ] \&\& $SETTING=$(grep_json "$SETTING" $OLDJSON);
       eval TMPVAL=\$$SETTING;
-      [ -n "$TMPVAL" ] && sed -i "s;\($SETTING=\).;\1$TMPVAL;" custom.pif.prop;
+      [ -n "$TMPVAL" ] && sed -i "s;\($SETTING\": \"\).;\1$TMPVAL;" custom.pif.json;
     done;
   fi;
-  [ "$PATCH_COMMENT" ] && sed -i 's;\*.security_patch;#\*.security_patch;' custom.pif.prop;
-  echo "\n# Beta Released: $BETA_REL_DATE\n# Estimated Expiry: $BETA_EXP_DATE" >> custom.pif.prop;
-  cat custom.pif.prop;
+  [ "$PATCH_COMMENT" ] && sed -i 's;"\*.security_patch";//"\*.security_patch";' custom.pif.json;
+  sed -i "s;};\n  // Beta Released: $BETA_REL_DATE\n  // Estimated Expiry: $BETA_EXP_DATE\n};" custom.pif.json;
+  cat custom.pif.json;
 fi;
 
 if [ "$DIR" = /data/adb/modules/playintegrityfix/autopif2 ]; then
   if [ -f /data/adb/modules/playintegrityfix/migrate.sh ]; then
-    NEWNAME="custom.pif.prop";
+    NEWNAME="custom.pif.json";
   else
-    NEWNAME="pif.prop";
+    NEWNAME="pif.json";
   fi;
-  for OLDPIF in $NEWNAME custom.pif.json; do
-    if [ -f "../$OLDPIF" ]; then
-      item "Renaming old file to $OLDPIF.bak ...";
-      mv -fv ../$OLDPIF ../$OLDPIF.bak;
-    fi;
-  done;
-  item "Installing new prop ...";
+  if [ -f "../$NEWNAME" ]; then
+    item "Renaming old file to $NEWNAME.bak ...";
+    mv -fv ../$NEWNAME ../$NEWNAME.bak;
+  fi;
+  item "Installing new json ...";
   cp -fv $NEWNAME ..;
-  TS_DIR=/data/adb/tricky_store;
-  if [ -d "$TS_DIR" ]; then
+  TS_SECPAT=/data/adb/tricky_store/security_patch.txt;
+  if [ -f "$TS_SECPAT" ]; then
     item "Updating Tricky Store security_patch.txt ...";
-    TS_SECPAT=$TS_DIR/security_patch.txt;
-    touch $TS_SECPAT;
     [ -s "$TS_SECPAT" ] || echo "all=" > $TS_SECPAT;
     grep -qE '^[0-9]{8}$' $TS_SECPAT && sed -i "s/^.*$/${SECURITY_PATCH//-}/" $TS_SECPAT;
     grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' $TS_SECPAT && sed -i "s/^.*$/$SECURITY_PATCH/" $TS_SECPAT;
