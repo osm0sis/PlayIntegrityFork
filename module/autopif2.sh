@@ -45,8 +45,24 @@ find_busybox() {
   return 1;
 }
 
+# --- NEW, PORTABLE FIX ---
 if which wget2 >/dev/null; then
   wget() { wget2 "$@"; }
+elif which curl >/dev/null; then
+  # Found curl in PATH. Define a function to translate.
+  # The script calls: wget -q -O <file> --no-check-certificate <url>
+  # Let's map arguments.
+  wget() {
+    # This is a simple translation for the script's specific use case.
+    # $1= -q (ignored, curl is quiet with -s)
+    # $2= -O
+    # $3= <file> (output)
+    # $4= --no-check-certificate (ignored, curl uses -k)
+    # $5= <url> (the URL)
+    
+    # Use 'command' to avoid recursion if curl is an alias
+    command curl -L -s -k -o "$3" "$5"
+  }
 elif ! which wget >/dev/null || grep -q "wget-curl" $(which wget); then
   if ! find_busybox; then
     die "wget not found";
