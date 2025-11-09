@@ -47,6 +47,10 @@ find_busybox() {
 
 if which wget2 >/dev/null; then
   wget() { wget2 "$@"; }
+elif which curl >/dev/null; then
+  # map arguments for simple equivalent use with:
+  # wget -q -O <file> --no-check-certificate <url>
+  wget() { curl -S -s -k -o "$3" "$5"; }
 elif ! which wget >/dev/null || grep -q "wget-curl" $(which wget); then
   if ! find_busybox; then
     die "wget not found";
