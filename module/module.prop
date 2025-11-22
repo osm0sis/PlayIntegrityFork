@@ -1,7 +1,7 @@
 id=playintegrityfix
 name=Play Integrity Fork
-version=v14
-versionCode=141001
+version=v15
+versionCode=150000
 author=osm0sis & chiteroman @ xda-developers
 description=Fix <A13 Play Integrity DEVICE verdict
 updateJson=https://raw.githubusercontent.com/osm0sis/PlayIntegrityFork/main/update.json
