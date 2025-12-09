@@ -42,10 +42,8 @@ A migration may also be performed manually in the module directory with a custom
 <details>
 <summary><strong>Resources</strong></summary>
 
-- Official Thread:
+- Official Threads:
   - [PIFork](https://xdaforums.com/t/module-play-integrity-fork-pifork.4761120/) - More info, working setups, resources and support (READ FIRST!)
-
-- FAQ:
   - [PIF & TS FAQ](https://xdaforums.com/t/pif-faq.4653307/) - Frequently Asked Questions
 
 - Guides:
@@ -54,7 +52,8 @@ A migration may also be performed manually in the module directory with a custom
 
 - Scripts:
   - [gen_pif_custom.sh](https://xdaforums.com/t/tools-zips-scripts-osm0sis-odds-and-ends-multiple-devices-platforms.2239421/post-89173470) - Script to generate a custom.pif.prop/.json from device dump build.prop files
-  - [pif-test-json-file.sh](https://xdaforums.com/t/module-play-integrity-fix-safetynet-fix.4607985/post-89561228) - Script to automate generating and testing json files to attempt to find working fingerprints 
+  - [pif-test-json-file.sh](https://xdaforums.com/t/module-play-integrity-fix-safetynet-fix.4607985/post-89561228) - Script to automate generating and testing json files to attempt to find working fingerprints
+  - [settings.sh](https://github.com/Vagelis1608/The-Pot/blob/main/pifork/settings.sh) - Script to change the PIFork Advanced Settings from the command line
 
 - Apps:
   - [FP BETA Checker](https://xdaforums.com/t/tricky-store-bootloader-keybox-spoofing.4683446/post-89754890) - Tasker App to check the estimated expiry of the Pixel Beta fingerprint and trigger autopif2.sh to update
@@ -169,7 +168,7 @@ The advanced spoofing options add granular control over what exactly gets spoofe
 
 - Leaving spoofVendingSdk enabled is NOT recommended, it [will break](https://github.com/osm0sis/PlayIntegrityFork/pull/30) the behavior of the Play Store to some extent (back gesture/navbar button for all, account sign-in and downloads for higher original ROM SDK_INT) and could have other unintended effects like incorrect app variants being served, crashes, etc. Play Store must be fully set up before (and data not cleared during) enabling spoofVendingSdk or it and PI checks will only crash/hang. It may crash multiple times with various errors before returning a verdict. See the Resources section above for a helpful spoofVendingSdk QSTile toggle app.
 
-- For spoofing locked bootloader and attempting to pass <A13 PI STRONG integrity, or A13+ PI DEVICE or STRONG integrity, I only recommend using the latest official [Tricky Store](https://github.com/5ec1cff/TrickyStore) or [Tricky Store OSS](https://github.com/beakthoven/TrickyStoreOSS) release.
+- For spoofing locked bootloader and attempting to pass <A13 PI STRONG integrity, or A13+ PI DEVICE or STRONG integrity, I only recommend using the latest official [Tricky Store](https://github.com/5ec1cff/TrickyStore), [Tricky Store OSS](https://github.com/beakthoven/TrickyStoreOSS) or [TEESimulator](https://github.com/JingMatrix/TEESimulator) release.
 
 - Note: Using Tricky Store to achieve <A13 PI STRONG integrity (with an unrevoked hardware keybox.xml), requires the Advanced Settings "spoofProvider" disabled and sometimes the "\*.security_patch" entry commented out (often unless spoofing a matching OS Patch Level with system= or all= or Simple date in Tricky Store's security_patch.txt; autopif2 will do this automatically if Tricky Store's directory exists), and a fingerprint with "\*api_level" value >25 (usually 26-32). To achieve <A13 PI DEVICE integrity (with Tricky Store default AOSP software keybox.xml) requires at least "spoofProps" enabled, and some fingerprints may also require "spoofProvider" enabled, and a fingerprint with "\*api_level" value <26 (usually 21-25). More known working private fingerprints can achieve <A13 PI DEVICE/STRONG integrity on more devices using these Advanced Settings in conjunction with Tricky Store than was possible with Tricky Store alone since they require fingerprint props spoofing.
 
