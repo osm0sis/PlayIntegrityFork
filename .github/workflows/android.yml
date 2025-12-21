@@ -16,7 +16,7 @@ jobs:
 
     steps:
     - name: Check out
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         submodules: 'recursive'
         fetch-depth: 0
@@ -34,7 +34,7 @@ jobs:
       run: ./gradlew --warning-mode all assembleRelease
 
     - name: Upload CI module zip as artifact zip
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: PlayIntegrityFork-CI_#${{ github.run_number }}
         path: 'module/*'
