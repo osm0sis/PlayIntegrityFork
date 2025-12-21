@@ -104,7 +104,7 @@ echo "Beta Released: $BETA_REL_DATE \
 MODEL_LIST="$(grep -A1 'tr id=' PIXEL_OTA_HTML | grep 'td' | sed 's;.*<td>\(.*\)</td>;\1;')";
 PRODUCT_LIST="$(grep 'tr id=' PIXEL_OTA_HTML | sed 's;.*<tr id="\(.*\)">;\1_beta;')";
 OTA_LIST="$(grep -o '>.*_beta.*</button' PIXEL_OTA_HTML | sed 's;.*>\(.*\)</button;\1;')";
-OTA_PREFIX="$(grep -m1 'ota/.*_beta' PIXEL_OTA_HTML | cut -d\" -f2 | rev | cut -d/ -f2- | rev)";
+OTA_PREFIX="$(grep -m1 'ota/.*_beta' PIXEL_OTA_HTML | cut -d\" -f2 | sed 's;\(.*\)/.*;\1;')";
 
 if [ "$FORCE_MATCH" ]; then
   DEVICE="$(getprop ro.product.device)";
