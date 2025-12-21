@@ -218,14 +218,28 @@ if [ "$DIR" = /data/adb/modules/playintegrityfix/autopif2 ]; then
   cp -fv $NEWNAME ..;
   TS_DIR=/data/adb/tricky_store;
   if [ -d "$TS_DIR" ]; then
-    item "Updating Tricky Store security_patch.txt ...";
     TS_SECPAT=$TS_DIR/security_patch.txt;
     touch $TS_SECPAT;
-    [ -s "$TS_SECPAT" ] || echo "all=" > $TS_SECPAT;
-    grep -qE '^[0-9]{8}$' $TS_SECPAT && sed -i "s/^.*$/${SECURITY_PATCH//-}/" $TS_SECPAT;
-    grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' $TS_SECPAT && sed -i "s/^.*$/$SECURITY_PATCH/" $TS_SECPAT;
+    if [ -f /data/adb/modules/tricky_store/libTEESimulator.so ]; then
+        item "Updating TEESimulator security_patch.txt ...";
+        if [ -s "$TS_SECPAT" ]; then
+            cat <<EOF > $TS_SECPAT;
+all=
+
+[com.google.android.gms]
+system=no
+EOF
+        fi;
+    else
+        item "Updating Tricky Store security_patch.txt ...";
+        [ -s "$TS_SECPAT" ] || echo "all=" > $TS_SECPAT;
+        grep -qE '^[0-9]{8}$' $TS_SECPAT && sed -i "s/^.*$/${SECURITY_PATCH//-}/" $TS_SECPAT;
+        grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' $TS_SECPAT && sed -i "s/^.*$/$SECURITY_PATCH/" $TS_SECPAT;
+    fi;
     grep -q 'all=' $TS_SECPAT && sed -i "s/all=.*/all=$SECURITY_PATCH/" $TS_SECPAT;
-    grep -q 'system=' $TS_SECPAT && sed -i "s/system=.*/system=$(echo ${SECURITY_PATCH//-} | cut -c-6)/" $TS_SECPAT;
+    if ! grep -q 'system=no' $TS_SECPAT; then
+        grep -q 'system=' $TS_SECPAT && sed -i "s/system=.*/system=$(echo ${SECURITY_PATCH//-} | cut -c-6)/" $TS_SECPAT;
+    fi;
     sed -i '$a\' $TS_SECPAT;
     cat $TS_SECPAT;
   fi;
