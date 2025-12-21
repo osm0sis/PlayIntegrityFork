@@ -222,7 +222,7 @@ if [ "$DIR" = /data/adb/modules/playintegrityfix/autopif2 ]; then
     touch $TS_SECPAT;
     if [ -f /data/adb/modules/tricky_store/libTEESimulator.so ]; then
         item "Updating TEESimulator security_patch.txt ...";
-        if [ -s "$TS_SECPAT" ]; then
+        if [ ! -s "$TS_SECPAT" ]; then
             cat <<EOF > $TS_SECPAT;
 all=
 
