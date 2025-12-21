@@ -68,7 +68,7 @@ if ! $SKIPPERSISTPROP; then
     fi
 
     # Work around supported custom ROM PropImitationHooks/PixelPropsUtils (and hybrids) conflict when spoofProvider is disabled
-    if resetprop | grep -qE "persist.sys.pihooks|persist.sys.entryhooks|persist.sys.spoof|persist.sys.pixelprops" || [ -f /data/system/gms_certified_props.json ]; then
+    if resetprop | grep -qE "persist.sys.pihooks|persist.sys.entryhooks|persist.sys.spoof|persist.sys.pixelprops|persist.sys.pp" || [ -f /data/system/gms_certified_props.json ]; then
         persistprop persist.sys.pihooks.disable.gms_props true
         persistprop persist.sys.pihooks.disable.gms_key_attestation_block true
         persistprop persist.sys.entryhooks_enabled false
@@ -77,6 +77,8 @@ if ! $SKIPPERSISTPROP; then
         persistprop persist.sys.pixelprops.gapps false
         persistprop persist.sys.pixelprops.google false
         persistprop persist.sys.pixelprops.pi false
+        persistprop persist.sys.pp.gms false
+        persistprop persist.sys.pp.finsky false
     fi
 elif [ "$MODPATH/uninstall.sh" ]; then
     sh $MODPATH/uninstall.sh
