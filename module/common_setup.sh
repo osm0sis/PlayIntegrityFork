@@ -5,6 +5,9 @@ if [ -d /data/adb/modules/safetynet-fix ]; then
 fi
 
 # Replace/hide conflicting custom ROM injection app folders/files to disable them
+MAGISK_WHITEOUT=false
+[ -f /data/adb/magisk/util_functions.sh ] && [ "$(grep MAGISK_VER_CODE /data/adb/magisk/util_functions.sh | cut -d= -f2)" -ge 28102 ] && MAGISK_WHITEOUT=true;
+
 LIST=$MODPATH/app_replace_list.txt
 [ -f "$MODPATH/custom.app_replace_list.txt" ] && LIST=$MODPATH/custom.app_replace_list.txt
 for APP in $(grep -v '^#' $LIST); do
@@ -15,15 +18,18 @@ for APP in $(grep -v '^#' $LIST); do
         esac
         HIDEPATH=$MODPATH$PREFIX$APP
         if [ -d "$APP" ]; then
-            mkdir -p $HIDEPATH
+            $MAGISK_WHITEOUT || mkdir -p $HIDEPATH
             if [ "$KSU" = "true" -o "$APATCH" = "true" ]; then
                 setfattr -n trusted.overlay.opaque -v y $HIDEPATH
+            elif $MAGISK_WHITEOUT; then
+                mkdir -p $(dirname $HIDEPATH)
+                mknod $HIDEPATH c 0 0
             else
                 touch $HIDEPATH/.replace
             fi
         else
             mkdir -p $(dirname $HIDEPATH)
-            if [ "$KSU" = "true" -o "$APATCH" = "true" ]; then
+            if [ "$KSU" = "true" -o "$APATCH" = "true" -o "$MAGISK_WHITEOUT" = "true" ]; then
                 mknod $HIDEPATH c 0 0
             else
                 touch $HIDEPATH
