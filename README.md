@@ -2,9 +2,11 @@
 *PIF forked to be more futureproof and develop more methodically*
 
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/osm0sis/PlayIntegrityFork?label=Release&color=blue&style=flat)](https://github.com/osm0sis/PlayIntegrityFork/releases/latest)
-[![GitHub Release Date](https://img.shields.io/github/release-date/osm0sis/PlayIntegrityFork?label=Release%20Date&color=brightgreen&style=flat)](https://github.com/osm0sis/PlayIntegrityFork/releases)
-[![GitHub Releases](https://img.shields.io/github/downloads/osm0sis/PlayIntegrityFork/latest/total?label=Downloads%20%28Latest%20Release%29&color=blue&style=flat)](https://github.com/osm0sis/PlayIntegrityFork/releases/latest)
-[![GitHub All Releases](https://img.shields.io/github/downloads/osm0sis/PlayIntegrityFork/total?label=Total%20Downloads%20%28All%20Releases%29&color=brightgreen&style=flat)](https://github.com/osm0sis/PlayIntegrityFork/releases)
+[![GitHub Release Date](https://img.shields.io/github/release-date/osm0sis/PlayIntegrityFork?label=Release%20Date&color=brightgreen&style=flat)](https://github.com/osm0sis/PlayIntegrityFork/releases)  
+[![Main Releases](https://img.shields.io/github/downloads/osm0sis/PlayIntegrityFork/latest/total?label=Main%20Repo%20Downloads%20%28Latest%20Release%29&color=blue&style=flat)](https://github.com/osm0sis/PlayIntegrityFork/releases/latest)
+[![Main All Releases](https://img.shields.io/github/downloads/osm0sis/PlayIntegrityFork/total?label=Main%20Repo%20Total%20Downloads%20%28All%20Releases%29&color=brightgreen&style=flat)](https://github.com/osm0sis/PlayIntegrityFork/releases)  
+[![KSU Releases](https://img.shields.io/github/downloads/KernelSU-Modules-Repo/playintegrityfix/latest/total?label=KernelSU%20Modules%20Repo%20Downloads%20%28Latest%20Release%29&color=blue&style=flat)](https://github.com/osm0sis/PlayIntegrityFork/releases/latest)
+[![KSU All Releases](https://img.shields.io/github/downloads/KernelSU-Modules-Repo/playintegrityfix/total?label=KernelSU%20Modules%20Repo%20Total%20Downloads%20%28All%20Releases%29&color=brightgreen&style=flat)](https://github.com/osm0sis/PlayIntegrityFork/releases)
 
 [![PIFork Official XDA Thread](https://img.shields.io/badge/XDA_Forums-PIFork_Official_Thread-blue?logo=XDA-Developers&logoColor=white)](https://xdaforums.com/t/module-play-integrity-fork-pifork.4761120/)
 
