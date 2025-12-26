@@ -1,32 +1,28 @@
 #!/system/bin/sh
 
 if [ "$USER" != "root" -a "$(whoami 2>/dev/null)" != "root" ]; then
-  echo "autopif3: need root permissions"; exit 1;
+  echo "autopif4: need root permissions"; exit 1;
 fi;
 case "$HOME" in
-  *termux*) echo "autopif3: need su root environment"; exit 1;;
+  *termux*) echo "autopif4: need su root environment"; exit 1;;
 esac;
 
-FORCE_TOP=1;
-FORCE_DEPTH=1;
 until [ -z "$1" ]; do
   case "$1" in
-    -h|--help|help) echo "sh autopif3.sh [-a|-s] [-m] [-t #] [-d #]"; exit 0;;
+    -h|--help|help) echo "sh autopif4.sh [-a|-s] [-m]"; exit 0;;
     -a|--advanced|advanced) ARGS="-a"; shift;;
     -s|--strong|strong) FORCE_STRONG=1; shift;;
     -m|--match|match) FORCE_MATCH=1; shift;;
-    -t|--top|top) echo "$2" | grep -q '^[1-9]$' || exit 1; FORCE_TOP=$2; shift 2;;
-    -d|--depth|depth) echo "$2" | grep -q '^[1-9]$' || exit 1; FORCE_DEPTH=$2; shift 2;;
     *) break;;
   esac;
 done;
 
-echo "Pixel Beta pif.prop generator script \
+echo "Pixel Canary pif.prop generator script \
   \n  by osm0sis @ xda-developers";
 
 case "$0" in
   *.sh) DIR="$0";;
-  *) DIR="$(lsof -p $$ 2>/dev/null | grep -o '/.*autopif3.sh$')";;
+  *) DIR="$(lsof -p $$ 2>/dev/null | grep -o '/.*autopif4.sh$')";;
 esac;
 DIR=$(dirname "$(readlink -f "$DIR")");
 
@@ -45,13 +41,7 @@ find_busybox() {
   return 1;
 }
 
-if which wget2 >/dev/null; then
-  wget() { wget2 "$@"; }
-elif which curl >/dev/null; then
-  # map arguments for simple equivalent use with:
-  # wget -q -O <file> --no-check-certificate <url>
-  wget() { curl -S -s -k -o "$3" "$5"; }
-elif ! which wget >/dev/null || grep -q "wget-curl" $(which wget); then
+if ! which wget >/dev/null || grep -q "wget-curl" $(which wget); then
   if ! find_busybox; then
     die "wget not found";
   elif $BUSYBOX ping -c1 -s2 android.com 2>&1 | grep -q "bad address"; then
@@ -78,33 +68,18 @@ if ! echo "A\nB" | grep -m1 -A1 "A" | grep -q "B"; then
 fi;
 
 if [ "$DIR" = /data/adb/modules/playintegrityfix ]; then
-  DIR=$DIR/autopif3;
+  DIR=$DIR/autopif4;
   mkdir -p $DIR;
 fi;
 cd "$DIR";
 
-item "Crawling Android Developers for latest Pixel Beta ...";
-wget -q -O PIXEL_VERSIONS_HTML --no-check-certificate https://developer.android.com/about/versions 2>&1 || exit 1;
-wget -q -O PIXEL_LATEST_HTML --no-check-certificate $(grep -o 'https://developer.android.com/about/versions/.*[0-9]"' PIXEL_VERSIONS_HTML | sort -ru | cut -d\" -f1 | head -n$FORCE_TOP | tail -n1) 2>&1 || exit 1;
-wget -q -O PIXEL_OTA_HTML --no-check-certificate https://developer.android.com$(grep -o 'href=".*download-ota.*"' PIXEL_LATEST_HTML | grep 'qpr' | cut -d\" -f2 | head -n$FORCE_DEPTH | tail -n1) 2>&1 || exit 1;
-echo "$(grep -m1 -oE 'tooltip>Android .*[0-9]' PIXEL_OTA_HTML | cut -d\> -f2) $(grep -oE 'tooltip>QPR.* Beta' PIXEL_OTA_HTML | cut -d\> -f2 | head -n$FORCE_DEPTH | tail -n1)";
-
-if grep -q 'Release date' PIXEL_OTA_HTML; then
-  LONG_REL_DATE="$(grep -m1 -A1 'Release date' PIXEL_OTA_HTML)";
-else
-  wget -q -O PIXEL_FI_HTML --no-check-certificate https://developer.android.com$(grep -o 'href=".*download.*"' PIXEL_LATEST_HTML | grep 'qpr' | cut -d\" -f2 | head -n$FORCE_DEPTH | tail -n1) 2>&1 || exit 1;
-  LONG_REL_DATE="$(grep -m1 -A1 'Release date' PIXEL_FI_HTML)";
-fi;
-
-BETA_REL_DATE="$(date -D '%B %e, %Y' -d "$(echo $LONG_REL_DATE | tail -n1 | sed 's;.*<td>\(.*\)</td>.*;\1;')" '+%Y-%m-%d')";
-BETA_EXP_DATE="$(date -D '%s' -d "$(($(date -D '%Y-%m-%d' -d "$BETA_REL_DATE" '+%s') + 60 * 60 * 24 * 7 * 6))" '+%Y-%m-%d')";
-echo "Beta Released: $BETA_REL_DATE \
-  \nEstimated Expiry: $BETA_EXP_DATE";
-
-MODEL_LIST="$(grep -A1 'tr id=' PIXEL_OTA_HTML | grep 'td' | sed 's;.*<td>\(.*\)</td>;\1;')";
-PRODUCT_LIST="$(grep 'tr id=' PIXEL_OTA_HTML | sed 's;.*<tr id="\(.*\)">;\1_beta;')";
-OTA_LIST="$(grep -o '>.*_beta.*</button' PIXEL_OTA_HTML | sed 's;.*>\(.*\)</button;\1;')";
-OTA_PREFIX="$(grep -m1 'ota/.*_beta' PIXEL_OTA_HTML | cut -d\" -f2 | sed 's;\(.*\)/.*;\1;')";
+item "Crawling Android Developers for latest Pixel Beta device list ...";
+wget -q -O PIXEL_VERSIONS_HTML --no-check-certificate "https://developer.android.com/about/versions" 2>&1 || exit 1;
+wget -q -O PIXEL_LATEST_HTML --no-check-certificate "$(grep -o 'https://developer.android.com/about/versions/.*[0-9]"' PIXEL_VERSIONS_HTML | sort -ru | cut -d\" -f1 | head -n1 | tail -n1)" 2>&1 || exit 1;
+wget -q -O PIXEL_FI_HTML --no-check-certificate "https://developer.android.com$(grep -o 'href=".*download.*"' PIXEL_LATEST_HTML | grep 'qpr' | cut -d\" -f2 | head -n1 | tail -n1)" 2>&1 || exit 1;
+MODEL_LIST="$(grep -A1 'tr id=' PIXEL_FI_HTML | grep 'td' | sed 's;.*<td>\(.*\)</td>;\1;')";
+PRODUCT_LIST="$(grep 'tr id=' PIXEL_FI_HTML | sed 's;.*<tr id="\(.*\)">;\1_beta;')";
+echo "$PRODUCT_LIST" | wc -w;
 
 if [ "$FORCE_MATCH" ]; then
   DEVICE="$(getprop ro.product.device)";
@@ -112,7 +87,6 @@ if [ "$FORCE_MATCH" ]; then
     *" ${DEVICE}_beta "*)
       MODEL="$(getprop ro.product.model)";
       PRODUCT="${DEVICE}_beta";
-      OTA="$OTA_PREFIX/$(echo "$OTA_LIST" | grep "$PRODUCT")";
     ;;
   esac;
 fi;
@@ -126,30 +100,37 @@ if [ -z "$PRODUCT" ]; then
     MODEL="$(eval echo \${$list_rand})";
     set -- $PRODUCT_LIST;
     PRODUCT="$(eval echo \${$list_rand})";
-    set -- $OTA_LIST;
-    OTA="$OTA_PREFIX/$(eval echo \${$list_rand})";
     DEVICE="$(echo "$PRODUCT" | sed 's/_beta//')";
   }
   set_random_beta;
 fi;
 echo "$MODEL ($PRODUCT)";
 
-(ulimit -f 2; wget -q -O PIXEL_ZIP_METADATA --no-check-certificate $OTA) 2>/dev/null;
-FINGERPRINT="$(grep -am1 'post-build=' PIXEL_ZIP_METADATA 2>/dev/null | cut -d= -f2)";
-SECURITY_PATCH="$(grep -am1 'security-patch-level=' PIXEL_ZIP_METADATA 2>/dev/null | cut -d= -f2)";
-if [ -z "$FINGERPRINT" -o -z "$SECURITY_PATCH" ]; then
-  case "$(getprop ro.product.cpu.abi)" in
-    armeabi-v7a|x86) [ "$BUSYBOX" ] && ISBB32MSG=", install wget2";;
-  esac;
-  echo "\nError: Failed to extract information from metadata$ISBB32MSG!";
-  exit 1;
-fi;
+item "Crawling Android Flash Tool for latest Pixel Canary build info ...";
+wget -q -O PIXEL_FLASH_HTML --no-check-certificate "https://flash.android.com/" 2>&1 || exit 1;
+wget -q -O PIXEL_STATION_JSON --header "Referer: https://flash.android.com" --no-check-certificate "https://content-flashstation-pa.googleapis.com/v1/builds?product=$PRODUCT&key=$(grep -o '<body data-client-config=.*' PIXEL_FLASH_HTML | cut -d\; -f2 | cut -d\& -f1)" 2>&1 || exit 1;
+CANARY_LATEST_JSON="$(tac PIXEL_STATION_JSON | grep -m1 -A13 'canary')";
+ID="$(echo "$CANARY_LATEST_JSON" | grep 'releaseCandidateName' | cut -d\" -f4)";
+INCREMENTAL="$(echo "$CANARY_LATEST_JSON" | grep 'buildId' | cut -d\" -f4)";
+echo "Android $(echo "$CANARY_LATEST_JSON" | grep 'releaseTrackVersionName' | cut -d\" -f4)";
+
+FI="$(echo "$CANARY_LATEST_JSON" | grep 'factoryImageDownloadUrl' | cut -d\" -f4)";
+wget -q -S --spider -o PIXEL_ZIP_HEADERS --no-check-certificate "$FI" 2>&1 || exit 1;
+CANARY_REL_DATE="$(date -D '%a, %d %b %Y %H:%M:%S %Z' -d "$(grep -o 'Last-Modified.*' PIXEL_ZIP_HEADERS | cut -d\  -f2-)" '+%Y-%m-%d')";
+CANARY_EXP_DATE="$(date -D '%s' -d "$(($(date -D '%Y-%m-%d' -d "$CANARY_REL_DATE" '+%s') + 60 * 60 * 24 * 7 * 6))" '+%Y-%m-%d')";
+echo "Canary Released: $CANARY_REL_DATE \
+  \nEstimated Expiry: $CANARY_EXP_DATE";
+
+item "Crawling Pixel Update Bulletins for corresponding security patch level ...";
+wget -q -O PIXEL_SECBULL_HTML --no-check-certificate "https://source.android.com/docs/security/bulletin/pixel" 2>&1 || exit 1;
+SECURITY_PATCH="$(grep "<td>$(echo "$CANARY_LATEST_JSON" | grep '"id"' | sed -e 's;.*canary-\(.*\)".*;\1;' -e 's;^\(.\{4\}\);\1-;')" PIXEL_SECBULL_HTML | sed 's;.*<td>\(.*\)</td>;\1;')";
+echo "$SECURITY_PATCH";
 
 item "Dumping values to minimal pif.prop ...";
 cat <<EOF | tee pif.prop;
 MANUFACTURER=Google
 MODEL=$MODEL
-FINGERPRINT=$FINGERPRINT
+FINGERPRINT=google/$PRODUCT/$DEVICE:CANARY/$ID/$INCREMENTAL:user/release-keys
 PRODUCT=$PRODUCT
 DEVICE=$DEVICE
 SECURITY_PATCH=$SECURITY_PATCH
@@ -198,11 +179,11 @@ if [ -f "$MIGRATE" ]; then
     done;
   fi;
   [ "$PATCH_COMMENT" ] && sed -i 's;\*.security_patch;#\*.security_patch;' custom.pif.prop;
-  echo "\n# Beta Released: $BETA_REL_DATE\n# Estimated Expiry: $BETA_EXP_DATE" >> custom.pif.prop;
+  echo "\n# Canary Released: $CANARY_REL_DATE\n# Estimated Expiry: $CANARY_EXP_DATE" >> custom.pif.prop;
   cat custom.pif.prop;
 fi;
 
-if [ "$DIR" = /data/adb/modules/playintegrityfix/autopif3 ]; then
+if [ "$DIR" = /data/adb/modules/playintegrityfix/autopif4 ]; then
   if [ -f /data/adb/modules/playintegrityfix/migrate.sh ]; then
     NEWNAME="custom.pif.prop";
   else
