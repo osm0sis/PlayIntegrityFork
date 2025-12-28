@@ -27,7 +27,8 @@ esac;
 DIR=$(dirname "$(readlink -f "$DIR")");
 
 item() { echo "\n- $@"; }
-die() { echo "\nError: $@, install busybox!"; exit 1; }
+die() { echo "\nError: $@!"; exit 1; }
+die_bb() { die "$@, install busybox"; }
 
 find_busybox() {
   [ -n "$BUSYBOX" ] && return 0;
@@ -43,9 +44,9 @@ find_busybox() {
 
 if ! which wget >/dev/null || grep -q "wget-curl" $(which wget); then
   if ! find_busybox; then
-    die "wget not found";
+    die_bb "wget not found";
   elif $BUSYBOX ping -c1 -s2 android.com 2>&1 | grep -q "bad address"; then
-    die "wget broken";
+    die_bb "wget broken";
   else
     wget() { $BUSYBOX wget "$@"; }
   fi;
@@ -53,7 +54,7 @@ fi;
 
 if date -D '%s' -d "$(date '+%s')" 2>&1 | grep -qE "bad date|invalid option"; then
   if ! find_busybox; then
-    die "date broken";
+    die_bb "date broken";
   else
     date() { $BUSYBOX date "$@"; }
   fi;
@@ -61,7 +62,7 @@ fi;
 
 if ! echo "A\nB" | grep -m1 -A1 "A" | grep -q "B"; then
   if ! find_busybox; then
-    die "grep broken";
+    die_bb "grep broken";
   else
     grep() { $BUSYBOX grep "$@"; }
   fi;
@@ -109,21 +110,25 @@ echo "$MODEL ($PRODUCT)";
 item "Crawling Android Flash Tool for latest Pixel Canary build info ...";
 wget -q -O PIXEL_FLASH_HTML --no-check-certificate "https://flash.android.com/" 2>&1 || exit 1;
 wget -q -O PIXEL_STATION_JSON --header "Referer: https://flash.android.com" --no-check-certificate "https://content-flashstation-pa.googleapis.com/v1/builds?product=$PRODUCT&key=$(grep -o '<body data-client-config=.*' PIXEL_FLASH_HTML | cut -d\; -f2 | cut -d\& -f1)" 2>&1 || exit 1;
-CANARY_LATEST_JSON="$(tac PIXEL_STATION_JSON | grep -m1 -A13 'canary')";
-ID="$(echo "$CANARY_LATEST_JSON" | grep 'releaseCandidateName' | cut -d\" -f4)";
-INCREMENTAL="$(echo "$CANARY_LATEST_JSON" | grep 'buildId' | cut -d\" -f4)";
-echo "Android $(echo "$CANARY_LATEST_JSON" | grep 'releaseTrackVersionName' | cut -d\" -f4)";
+tac PIXEL_STATION_JSON | grep -m1 -A13 '"canary": true' > PIXEL_CANARY_JSON;
+ID="$(grep 'releaseCandidateName' PIXEL_CANARY_JSON | cut -d\" -f4)";
+INCREMENTAL="$(grep 'buildId' PIXEL_CANARY_JSON | cut -d\" -f4)";
+[ -z "$ID" -o -z "$INCREMENTAL" ] && die "Failed to extract build info from JSON";
+echo "Android $(grep 'releaseTrackVersionName' PIXEL_CANARY_JSON | cut -d\" -f4)";
 
-FI="$(echo "$CANARY_LATEST_JSON" | grep 'factoryImageDownloadUrl' | cut -d\" -f4)";
-wget -q -S --spider -o PIXEL_ZIP_HEADERS --no-check-certificate "$FI" 2>&1 || exit 1;
+FI="$(grep 'factoryImageDownloadUrl' PIXEL_CANARY_JSON | cut -d\" -f4)";
+[ -z "$FI" ] && die "Failed to extract Factory Image URL from JSON";
+wget -q -S --spider -o PIXEL_ZIP_HEADERS --no-check-certificate "$FI" 2>&1 || { cat PIXEL_ZIP_HEADERS; exit 1; }
 CANARY_REL_DATE="$(date -D '%a, %d %b %Y %H:%M:%S %Z' -d "$(grep -o 'Last-Modified.*' PIXEL_ZIP_HEADERS | cut -d\  -f2-)" '+%Y-%m-%d')";
 CANARY_EXP_DATE="$(date -D '%s' -d "$(($(date -D '%Y-%m-%d' -d "$CANARY_REL_DATE" '+%s') + 60 * 60 * 24 * 7 * 6))" '+%Y-%m-%d')";
 echo "Canary Released: $CANARY_REL_DATE \
   \nEstimated Expiry: $CANARY_EXP_DATE";
 
 item "Crawling Pixel Update Bulletins for corresponding security patch level ...";
+CANARY_ID="$(grep '"id"' PIXEL_CANARY_JSON | sed -e 's;.*canary-\(.*\)".*;\1;' -e 's;^\(.\{4\}\);\1-;')";
+[ -z "$CANARY_ID" ] && die "Failed to extract build info from JSON";
 wget -q -O PIXEL_SECBULL_HTML --no-check-certificate "https://source.android.com/docs/security/bulletin/pixel" 2>&1 || exit 1;
-SECURITY_PATCH="$(grep "<td>$(echo "$CANARY_LATEST_JSON" | grep '"id"' | sed -e 's;.*canary-\(.*\)".*;\1;' -e 's;^\(.\{4\}\);\1-;')" PIXEL_SECBULL_HTML | sed 's;.*<td>\(.*\)</td>;\1;')";
+SECURITY_PATCH="$(grep "<td>$CANARY_ID" PIXEL_SECBULL_HTML | sed 's;.*<td>\(.*\)</td>;\1;')";
 echo "$SECURITY_PATCH";
 
 item "Dumping values to minimal pif.prop ...";
