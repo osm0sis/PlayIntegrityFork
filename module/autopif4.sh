@@ -29,6 +29,7 @@ DIR=$(dirname "$(readlink -f "$DIR")");
 item() { echo "\n- $@"; }
 die() { echo "\nError: $@!"; exit 1; }
 die_bb() { die "$@, install busybox"; }
+warn() { echo "\nWarning: $@!"; }
 
 find_busybox() {
   [ -n "$BUSYBOX" ] && return 0;
@@ -117,12 +118,28 @@ INCREMENTAL="$(grep 'buildId' PIXEL_CANARY_JSON | cut -d\" -f4)";
 echo "Android $(grep 'releaseTrackVersionName' PIXEL_CANARY_JSON | cut -d\" -f4)";
 
 FI="$(grep 'factoryImageDownloadUrl' PIXEL_CANARY_JSON | cut -d\" -f4)";
-[ -z "$FI" ] && die "Failed to extract Factory Image URL from JSON";
-wget -q -S --spider -o PIXEL_ZIP_HEADERS --no-check-certificate "$FI" 2>&1 || { cat PIXEL_ZIP_HEADERS; exit 1; }
-CANARY_REL_DATE="$(date -D '%a, %d %b %Y %H:%M:%S %Z' -d "$(grep -o 'Last-Modified.*' PIXEL_ZIP_HEADERS | cut -d\  -f2-)" '+%Y-%m-%d')";
-CANARY_EXP_DATE="$(date -D '%s' -d "$(($(date -D '%Y-%m-%d' -d "$CANARY_REL_DATE" '+%s') + 60 * 60 * 24 * 7 * 6))" '+%Y-%m-%d')";
-echo "Canary Released: $CANARY_REL_DATE \
-  \nEstimated Expiry: $CANARY_EXP_DATE";
+FI_HOST="$(echo "$FI" | sed 's;^.*://\(.*\)$;\1;' | cut -d/ -f1)";
+FI_PATH="/$(echo "$FI" | sed 's;^.*://\(.*\)$;\1;' | cut -d/ -f2-)";
+if [ "$FI" -a "$FI_HOST" -a "$FI_PATH" ]; then
+  nc $FI_HOST 80 <<EOF | tr -d '\r' > PIXEL_ZIP_HEADERS;
+HEAD $FI_PATH HTTP/1.1
+Host: $FI_HOST
+Connection: close
+
+EOF
+else
+  warn "Failed to extract Factory Image URL from JSON";
+fi;
+if [ -f PIXEL_ZIP_HEADERS ] && grep -q 'Last-Modified' PIXEL_ZIP_HEADERS; then
+  CANARY_REL_DATE="$(date -D '%a, %d %b %Y %H:%M:%S %Z' -d "$(grep -o 'Last-Modified.*' PIXEL_ZIP_HEADERS | cut -d\  -f2-)" '+%Y-%m-%d')";
+  CANARY_EXP_DATE="$(date -D '%s' -d "$(($(date -D '%Y-%m-%d' -d "$CANARY_REL_DATE" '+%s') + 60 * 60 * 24 * 7 * 6))" '+%Y-%m-%d')";
+  echo "Canary Released: $CANARY_REL_DATE \
+    \nEstimated Expiry: $CANARY_EXP_DATE";
+else
+  warn "Failed to determine Release Date from HTTP headers";
+  CANARY_REL_DATE="Unknown";
+  CANARY_EXP_DATE="Unknown";
+fi;
 
 item "Crawling Pixel Update Bulletins for corresponding security patch level ...";
 CANARY_ID="$(grep '"id"' PIXEL_CANARY_JSON | sed -e 's;.*canary-\(.*\)".*;\1;' -e 's;^\(.\{4\}\);\1-;')";
