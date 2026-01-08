@@ -130,6 +130,9 @@ EOF
 else
   warn "Failed to extract Factory Image URL from JSON";
 fi;
+if [ ! -s PIXEL_ZIP_HEADERS ] || ! grep -q 'Last-Modified' PIXEL_ZIP_HEADERS; then
+  wget -q -S --spider -o PIXEL_ZIP_HEADERS --no-check-certificate "$FI" 2>&1;
+fi;
 if [ -f PIXEL_ZIP_HEADERS ] && grep -q 'Last-Modified' PIXEL_ZIP_HEADERS; then
   CANARY_REL_DATE="$(date -D '%a, %d %b %Y %H:%M:%S %Z' -d "$(grep -o 'Last-Modified.*' PIXEL_ZIP_HEADERS | cut -d\  -f2-)" '+%Y-%m-%d')";
   CANARY_EXP_DATE="$(date -D '%s' -d "$(($(date -D '%Y-%m-%d' -d "$CANARY_REL_DATE" '+%s') + 60 * 60 * 24 * 7 * 6))" '+%Y-%m-%d')";
@@ -146,6 +149,11 @@ CANARY_ID="$(grep '"id"' PIXEL_CANARY_JSON | sed -e 's;.*canary-\(.*\)".*;\1;' -
 [ -z "$CANARY_ID" ] && die "Failed to extract build info from JSON";
 wget -q -O PIXEL_SECBULL_HTML --no-check-certificate "https://source.android.com/docs/security/bulletin/pixel" 2>&1 || exit 1;
 SECURITY_PATCH="$(grep "<td>$CANARY_ID" PIXEL_SECBULL_HTML | sed 's;.*<td>\(.*\)</td>;\1;')";
+if [ -z "$SECURITY_PATCH" ]; then
+  warn "Failed to determine exact security patch level from Pixel Update Bulletins";
+  item "Assuming probable security patch level from Canary build info ...";
+  SECURITY_PATCH="${CANARY_ID}-05";
+fi;
 echo "$SECURITY_PATCH";
 
 item "Dumping values to minimal pif.prop ...";
