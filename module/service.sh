@@ -46,4 +46,7 @@ resetprop_if_diff vendor.boot.vbmeta.device_state locked
 # Other
 resetprop_if_diff sys.oem_unlock_allowed 0
 
+# Compact property area to hide modifications on supported root solutions
+resetprop --compact >/dev/null 2>&1 || true
+
 }&
