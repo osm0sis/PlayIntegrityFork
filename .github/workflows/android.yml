@@ -34,7 +34,7 @@ jobs:
       run: ./gradlew --warning-mode all assembleRelease
 
     - name: Upload CI module zip as artifact zip
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: PlayIntegrityFork-CI_#${{ github.run_number }}
         path: 'module/*'
