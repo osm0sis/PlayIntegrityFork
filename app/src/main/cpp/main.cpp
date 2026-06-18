@@ -83,6 +83,36 @@ static void doHook() {
         reinterpret_cast<dobby_dummy_func_t *>(&o_system_property_read_callback));
 }
 
+static void setFieldNative(JNIEnv *env, jclass /* clazz_EntryPoint */, jclass targetClass, jobject fieldObj, jstring typeObj, jobject valueObj) {
+    if (!targetClass || !fieldObj || !typeObj) return;
+
+    jfieldID fieldID = env->FromReflectedField(fieldObj);
+    if (!fieldID) return;
+
+    const char *typeName = env->GetStringUTFChars(typeObj, nullptr);
+
+    if (strcmp(typeName, "java.lang.String") == 0) {
+        env->SetStaticObjectField(targetClass, fieldID, valueObj);
+    } else if (strcmp(typeName, "int") == 0) {
+        jclass intClass = env->FindClass("java/lang/Integer");
+        jmethodID intValue = env->GetMethodID(intClass, "intValue", "()I");
+        jint val = env->CallIntMethod(valueObj, intValue);
+        env->SetStaticIntField(targetClass, fieldID, val);
+    } else if (strcmp(typeName, "long") == 0) {
+        jclass longClass = env->FindClass("java/lang/Long");
+        jmethodID longValue = env->GetMethodID(longClass, "longValue", "()J");
+        jlong val = env->CallLongMethod(valueObj, longValue);
+        env->SetStaticLongField(targetClass, fieldID, val);
+    } else if (strcmp(typeName, "boolean") == 0) {
+        jclass boolClass = env->FindClass("java/lang/Boolean");
+        jmethodID booleanValue = env->GetMethodID(boolClass, "booleanValue", "()Z");
+        jboolean val = env->CallBooleanMethod(valueObj, booleanValue);
+        env->SetStaticBooleanField(targetClass, fieldID, val);
+    }
+
+    env->ReleaseStringUTFChars(typeObj, typeName);
+}
+
 class PlayIntegrityFix : public zygisk::ModuleBase {
 public:
     void onLoad(zygisk::Api *api, JNIEnv *env) override {
@@ -360,6 +390,13 @@ private:
         auto entryClassObj = env->CallObjectMethod(dexCl, loadClass, entryClassName);
 
         auto entryClass = (jclass) entryClassObj;
+
+        if (pkgName != VENDING_PACKAGE) {
+            JNINativeMethod methods[] = {
+                {"setFieldNative", "(Ljava/lang/Class;Ljava/lang/reflect/Field;Ljava/lang/String;Ljava/lang/Object;)V", (void*) setFieldNative}
+            };
+            env->RegisterNatives(entryClass, methods, 1);
+        }
 
         if (pkgName == VENDING_PACKAGE) {
             LOGD("JNI %s: Calling EntryPointVending.init", niceName);

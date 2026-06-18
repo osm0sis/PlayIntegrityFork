@@ -67,6 +67,9 @@ public final class EntryPoint {
     }
 
     public static void init(int logLevel, int spoofBuildVal, int spoofProviderVal, int spoofSignatureVal) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            HiddenApiBypass.addHiddenApiExemptions("");
+        }
         verboseLogs = logLevel;
         spoofBuildEnabled = spoofBuildVal;
         if (verboseLogs > 99) logFields();
@@ -211,6 +214,13 @@ public final class EntryPoint {
         }
         field.setAccessible(true);
         try {
+            Field accessFlagsField = Field.class.getDeclaredField("accessFlags");
+            accessFlagsField.setAccessible(true);
+            accessFlagsField.setInt(field, field.getModifiers() & ~java.lang.reflect.Modifier.FINAL);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            LOG(String.format("Couldn't modify accessFlags for '%s': " + e, name));
+        }
+        try {
             oldValue = String.valueOf(field.get(null));
         } catch (IllegalAccessException e) {
             LOG(String.format("Couldn't access '%s' field value: " + e, name));
@@ -234,14 +244,14 @@ public final class EntryPoint {
             return;
         }
         try {
-            field.set(null, newValue);
-        } catch (IllegalAccessException e) {
-            LOG(String.format("Couldn't modify '%s' field value: " + e, name));
-            return;
+            setFieldNative(field.getDeclaringClass(), field, fieldType.getName(), newValue);
+        } catch (Exception e) {
+            LOG(String.format("Native setField failed for '%s': " + e, name));
         }
-        field.setAccessible(false);
         LOG(String.format("[%s]: %s -> %s", name, oldValue, value));
     }
+
+    private static native void setFieldNative(Class<?> targetClass, Field field, String type, Object value);
 
     private static String logParseField(Field field) {
         Object value = null;
