@@ -1,3 +1,9 @@
+## Custom Fork v17
+
+- Support compacting prop area on root solutions that include it for better modification hiding
+- Improve autopif4 to check both Pixel Beta OTA and FI device lists and use the longer
+- Fix Build field spoofing on Android 17
+
 ## Custom Fork v16
 
 - Add opt-out props/detection for latest PixelPropsUtils version
@@ -5,15 +11,5 @@
 - Improve autopif3 with preliminary TEESimulator security_patch.txt format support
 - Add support for Magisk's file/directory whiteout implementation
 - Update to autopif4 to generate prints using monthly Pixel Canary build info
-
-## Custom Fork v15
-
-- Improve autopif2 to support latest Pixel Beta changes, create TS security_patch.txt, fix false matches, use curl if present
-- Fix PIF and Dobby detections, allow skipping persist props
-- Add experimental spoofVendingFinger feature
-- Fix migrate check on clean install
-- Update Action to only force Strong setup if no config, improve behavior on WKSU
-- Add prop config format support as default
-- Rename example.app_replace.list to app_replace_list.txt
 
 _[Full changelogs](https://github.com/osm0sis/PlayIntegrityFork/releases)_
