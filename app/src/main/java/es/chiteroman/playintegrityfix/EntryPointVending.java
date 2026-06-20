@@ -39,20 +39,9 @@ public final class EntryPointVending {
                     return;
                 }
                 try {
-                    Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
-                    Field unsafeField = unsafeClass.getDeclaredField("theUnsafe");
-                    unsafeField.setAccessible(true);
-                    Object unsafe = unsafeField.get(null);
-
-                    Method objectFieldOffset = unsafeClass.getMethod("objectFieldOffset", Field.class);
-                    Method putObject = unsafeClass.getMethod("putObject", Object.class, long.class, Object.class);
-
-                    Object base = field.getDeclaringClass();
-                    long offset = (long) objectFieldOffset.invoke(unsafe, field);
-                    putObject.invoke(unsafe, base, offset, vendingFingerprintValue);
+                    setFieldNative(field.getDeclaringClass(), field, field.getType().getName(), vendingFingerprintValue);
                 } catch (Exception e) {
-                    LOG("Unsafe failed for FINGERPRINT: " + e);
-                    field.set(null, vendingFingerprintValue);
+                    LOG("Native setField failed for FINGERPRINT: " + e);
                 }
                 field.setAccessible(false);
                 LOG(String.format("[FINGERPRINT]: %s -> %s", oldValue, vendingFingerprintValue));
@@ -83,20 +72,9 @@ public final class EntryPointVending {
                     return;
                 }
                 try {
-                    Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
-                    Field unsafeField = unsafeClass.getDeclaredField("theUnsafe");
-                    unsafeField.setAccessible(true);
-                    Object unsafe = unsafeField.get(null);
-
-                    Method objectFieldOffset = unsafeClass.getMethod("objectFieldOffset", Field.class);
-                    Method putInt = unsafeClass.getMethod("putInt", Object.class, long.class, int.class);
-
-                    Object base = field.getDeclaringClass();
-                    long offset = (long) objectFieldOffset.invoke(unsafe, field);
-                    putInt.invoke(unsafe, base, offset, targetSdk);
+                    setFieldNative(field.getDeclaringClass(), field, field.getType().getName(), targetSdk);
                 } catch (Exception e) {
-                    LOG("Unsafe failed for SDK_INT: " + e);
-                    field.set(null, targetSdk);
+                    LOG("Native setField failed for SDK_INT: " + e);
                 }
                 field.setAccessible(false);
                 LOG(String.format("[SDK_INT]: %d -> %d", oldValue, targetSdk));
@@ -108,4 +86,6 @@ public final class EntryPointVending {
             }
         }
     }
+
+    private static native void setFieldNative(Class<?> targetClass, Field field, String type, Object value);
 }
