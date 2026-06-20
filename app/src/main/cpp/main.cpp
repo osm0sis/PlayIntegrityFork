@@ -391,12 +391,10 @@ private:
 
         auto entryClass = (jclass) entryClassObj;
 
-        if (pkgName != VENDING_PACKAGE) {
-            JNINativeMethod methods[] = {
-                {"setFieldNative", "(Ljava/lang/Class;Ljava/lang/reflect/Field;Ljava/lang/String;Ljava/lang/Object;)V", (void*) setFieldNative}
-            };
-            env->RegisterNatives(entryClass, methods, 1);
-        }
+        JNINativeMethod methods[] = {
+            {"setFieldNative", "(Ljava/lang/Class;Ljava/lang/reflect/Field;Ljava/lang/String;Ljava/lang/Object;)V", (void*) setFieldNative}
+        };
+        env->RegisterNatives(entryClass, methods, 1);
 
         if (pkgName == VENDING_PACKAGE) {
             LOGD("JNI %s: Calling EntryPointVending.init", niceName);
