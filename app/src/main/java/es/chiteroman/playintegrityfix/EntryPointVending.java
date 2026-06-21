@@ -3,7 +3,6 @@ package es.chiteroman.playintegrityfix;
 import android.annotation.SuppressLint;
 import android.os.Build;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import android.util.Log;
 import org.lsposed.hiddenapibypass.HiddenApiBypass;
 
