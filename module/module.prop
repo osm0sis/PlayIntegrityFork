@@ -3,5 +3,5 @@ name=Play Integrity Fork
 version=v17
 versionCode=170001
 author=osm0sis & chiteroman @ xda-developers
-description=Fix <A13 Play Integrity DEVICE verdict
+description=Fix Play Integrity <A13 verdicts and Google Wallet/RCS on Android 7+
 updateJson=https://raw.githubusercontent.com/osm0sis/PlayIntegrityFork/main/update.json
