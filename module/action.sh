@@ -1,8 +1,10 @@
 MODPATH="${0%/*}"
 
 # ensure not running in busybox ash standalone shell
-set +o standalone
-unset ASH_STANDALONE
+if [ -n "$ASH_STANDALONE" ]; then
+    set +o standalone
+    unset ASH_STANDALONE
+fi
 
 sh $MODPATH/autopif4.sh -m || exit 1
 
