@@ -5,7 +5,10 @@ SKIPDELPROP=false
 delprop_if_exist() {
     local NAME="$1"
 
-    [ -n "$(resetprop "$NAME")" ] && resetprop --delete "$NAME"
+    if [ -n "$(resetprop "$NAME")" ]; then
+        resetprop --delete "$NAME"
+        resetprop -c $(resetprop -Z "$NAME") >/dev/null 2>&1 || true
+    fi
 }
 
 SKIPPERSISTPROP=false
