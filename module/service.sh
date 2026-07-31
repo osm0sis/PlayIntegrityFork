@@ -66,4 +66,7 @@ resetprop_if_diff sys.oem_unlock_allowed 0
 # Compact property area to hide modifications on supported root solutions
 resetprop --compact >/dev/null 2>&1 || true
 
+# Refresh the module card description with the live spoof status.
+[ -f "$MODPATH/desc.sh" ] && sh "$MODPATH/desc.sh" 2>/dev/null
+
 }&

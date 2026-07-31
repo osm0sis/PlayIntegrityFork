@@ -296,4 +296,7 @@ EOF
     item "Killing any running GMS DroidGuard/Play Store processes ...";
     sh /data/adb/modules/playintegrityfix/killpi.sh 2>&1 || true;
   fi;
+  if [ -f /data/adb/modules/playintegrityfix/desc.sh ]; then
+    sh /data/adb/modules/playintegrityfix/desc.sh 2>/dev/null;
+  fi;
 fi;
