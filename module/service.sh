@@ -14,10 +14,18 @@ resetprop_if_diff ro.boot.selinux enforcing
 if ! $SKIPDELPROP; then
     delprop_if_exist ro.build.selinux
 fi
-# use toybox to protect stat access time reading
-if [ "$(toybox cat /sys/fs/selinux/enforce)" = "0" ]; then
-    chmod 640 /sys/fs/selinux/enforce
-    chmod 440 /sys/fs/selinux/policy
+# Attestation probes read the live SELinux state (the selinuxfs enforce node
+# and access mode), so a permissive kernel stays detectable no matter what
+# ro.boot.selinux says. Actually return to enforcing; only hide the state
+# (toybox cat avoids bumping atime) if we cannot.
+SELINUX_ENFORCE=/sys/fs/selinux/enforce
+if [ -r "$SELINUX_ENFORCE" ] && [ "$(toybox cat "$SELINUX_ENFORCE")" = "0" ]; then
+    command -v setenforce >/dev/null 2>&1 && setenforce 1 2>/dev/null
+    [ "$(toybox cat "$SELINUX_ENFORCE")" = "0" ] && echo 1 > "$SELINUX_ENFORCE" 2>/dev/null
+    if [ "$(toybox cat "$SELINUX_ENFORCE")" = "0" ]; then
+        chmod 640 "$SELINUX_ENFORCE"
+        chmod 440 /sys/fs/selinux/policy
+    fi
 fi
 
 # Conditional late sensitive properties
