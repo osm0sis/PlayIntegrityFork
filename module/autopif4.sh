@@ -9,10 +9,11 @@ esac;
 
 until [ -z "$1" ]; do
   case "$1" in
-    -h|--help|help) echo "sh autopif4.sh [-a|-s] [-m]"; exit 0;;
+    -h|--help|help) echo "sh autopif4.sh [-a|-s] [-m|-d]"; exit 0;;
     -a|--advanced|advanced) ARGS="-a"; shift;;
     -s|--strong|strong) FORCE_STRONG=1; shift;;
     -m|--match|match) FORCE_MATCH=1; shift;;
+    -d|--device|device) DEVICE_SELF=1; shift;;
     *) break;;
   esac;
 done;
@@ -74,6 +75,30 @@ if [ "$DIR" = /data/adb/modules/playintegrityfix ]; then
   mkdir -p $DIR;
 fi;
 cd "$DIR";
+
+if [ "$DEVICE_SELF" ]; then
+  item "Reading this device's own fingerprint ...";
+  MANUFACTURER="$(getprop ro.product.manufacturer)";
+  MODEL="$(getprop ro.product.model)";
+  FINGERPRINT="$(getprop ro.build.fingerprint)";
+  SECURITY_PATCH="$(getprop ro.build.version.security_patch)";
+  DEVICE_INITIAL_SDK_INT="$(getprop ro.product.first_api_level)";
+  [ "$DEVICE_INITIAL_SDK_INT" ] || DEVICE_INITIAL_SDK_INT="$(getprop ro.board.first_api_level)";
+  [ "$FINGERPRINT" -a "$MODEL" ] || die "Failed to read device fingerprint";
+
+  # Stock sanity check: self-mode only passes on a Google-certified stock
+  # build. Custom ROMs / userdebug / test-keys report an uncertified
+  # fingerprint - warn (still capture, a ROM already spoofing a Pixel looks
+  # stock here and passes).
+  case "$FINGERPRINT $(getprop ro.build.tags) $(getprop ro.build.type)" in
+    *test-keys*|*userdebug*|*" eng"*) warn "build looks non-stock; own fingerprint may not be certified - use a Pixel on custom ROMs";;
+  esac;
+  case "$FINGERPRINT" in
+    *:user/release-keys) ;;
+    *) warn "build is not a certified stock release - use a Pixel on custom ROMs";;
+  esac;
+  echo "$MODEL ($FINGERPRINT)";
+else
 
 item "Crawling Android Developers for latest Pixel Beta device list ...";
 wget -q -T 10 -O PIXEL_VERSIONS_HTML --no-check-certificate "https://developer.android.com/about/versions" 2>&1 || exit 1;
@@ -160,15 +185,22 @@ if [ -z "$SECURITY_PATCH" ]; then
 fi;
 echo "$SECURITY_PATCH";
 
+fi;
+
+# Pixel path: build the fingerprint from crawled parts. Device path: it is
+# already the raw ro.build.fingerprint. Empty PRODUCT/DEVICE are derived
+# from FINGERPRINT by migrate.sh, so the device path needs no special case.
+[ "$DEVICE_SELF" ] || { MANUFACTURER=Google; FINGERPRINT="google/$PRODUCT/$DEVICE:CANARY/$ID/$INCREMENTAL:user/release-keys"; }
+
 item "Dumping values to minimal pif.prop ...";
 cat <<EOF | tee pif.prop;
-MANUFACTURER=Google
+MANUFACTURER=$MANUFACTURER
 MODEL=$MODEL
-FINGERPRINT=google/$PRODUCT/$DEVICE:CANARY/$ID/$INCREMENTAL:user/release-keys
+FINGERPRINT=$FINGERPRINT
 PRODUCT=$PRODUCT
 DEVICE=$DEVICE
 SECURITY_PATCH=$SECURITY_PATCH
-DEVICE_INITIAL_SDK_INT=32
+DEVICE_INITIAL_SDK_INT=${DEVICE_INITIAL_SDK_INT:-32}
 EOF
 
 for MIGRATE in migrate.sh /data/adb/modules/playintegrityfix/migrate.sh; do

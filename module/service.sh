@@ -36,6 +36,15 @@ until [ "$(getprop sys.boot_completed)" = "1" ]; do
     sleep 1
 done
 
+# Device-fingerprint mode: re-capture the device's own fingerprint after an
+# OEM OTA changes the build (only when it actually changed). Enable with
+# `touch module/devicefingerprint`.
+if [ -f "$MODPATH/devicefingerprint" ]; then
+    CUR="$(getprop ro.build.fingerprint)"
+    SAVED="$(grep -m1 '^FINGERPRINT=' "$MODPATH/custom.pif.prop" 2>/dev/null | cut -d= -f2)"
+    [ "$CUR" != "$SAVED" ] && sh "$MODPATH/autopif4.sh" --device >/dev/null 2>&1
+fi
+
 # SafetyNet/Play Integrity + OEM
 # avoid bootloop on some Xiaomi devices
 resetprop_if_diff ro.secureboot.lockstate locked
