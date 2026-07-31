@@ -7,247 +7,225 @@
 <title>Play Integrity Fork</title>
 <style>
   :root{
-    --bg:#000; --surface:#111114; --surface2:#17171c; --line:#26262e;
-    --text:#e9e9ee; --muted:#a0a0ab; --accent:#7cc4ff; --accent2:#4d9fff;
-    --ok:#39d98a; --warn:#ffcc66; --err:#ff6b6b; --radius:18px;
+    --bg:#000; --surface:#111114; --surface2:#1a1a20; --line:#26262e;
+    --text:#eaeaef; --muted:#9a9aa6; --accent:#4d9fff; --accent-soft:#7cc4ff;
+    --ok:#39d98a; --warn:#ffcc66; --err:#ff6b6b; --r:16px;
   }
-  @media (prefers-color-scheme: light){
-    :root{ --bg:#f4f4f7; --surface:#fff; --surface2:#f0f0f4; --line:#e2e2ea;
-      --text:#16161a; --muted:#5c5c6a; --accent:#0a6cff; --accent2:#0a6cff; }
+  @media (prefers-color-scheme:light){
+    :root{ --bg:#f5f5f8; --surface:#fff; --surface2:#eeeef2; --line:#e3e3ea;
+      --text:#16161a; --muted:#65656f; --accent:#0a6cff; --accent-soft:#0a6cff; }
   }
   *{box-sizing:border-box}
   html,body{margin:0}
   body{
-    background:
-      radial-gradient(130% 60% at 50% -10%, color-mix(in srgb,var(--accent) 12%, transparent) 0%, transparent 60%) fixed,
-      var(--bg);
-    color:var(--text); font-family:system-ui,-apple-system,Roboto,"Segoe UI",sans-serif;
-    padding: max(env(safe-area-inset-top),12px) 14px calc(env(safe-area-inset-bottom) + 20px);
-    -webkit-tap-highlight-color:transparent; line-height:1.45;
+    background:var(--bg); color:var(--text);
+    font-family:system-ui,-apple-system,Roboto,"Segoe UI",sans-serif; line-height:1.45;
+    padding:max(env(safe-area-inset-top),14px) 16px calc(env(safe-area-inset-bottom) + 24px);
+    -webkit-tap-highlight-color:transparent;
   }
-  .wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
-  header{display:flex;align-items:center;gap:12px;padding:6px 2px 2px}
-  header .logo{width:34px;height:34px;flex:0 0 auto}
-  header h1{font-size:1.25rem;margin:0;font-weight:650;letter-spacing:.01em}
+  .wrap{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+  header{display:flex;align-items:center;gap:12px;padding:2px}
+  header svg{width:30px;height:30px;flex:0 0 auto}
+  header h1{font-size:1.15rem;margin:0;font-weight:650}
   header .sub{font-size:.72rem;color:var(--muted);margin-top:1px}
-  .spacer{flex:1}
-  .icnbtn{background:var(--surface2);border:1px solid var(--line);color:var(--text);
-    width:40px;height:40px;border-radius:12px;font-size:1.1rem;display:grid;place-items:center;cursor:pointer}
-  .icnbtn:active{transform:scale(.94)}
-  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
-    padding:16px;box-shadow:0 10px 30px -20px #000}
-  .card h2{font-size:.82rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 12px}
-  .badge{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;font-weight:600;
-    padding:3px 9px;border-radius:999px;border:1px solid var(--line)}
-  .badge.dev{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,transparent);background:color-mix(in srgb,var(--ok) 12%,transparent)}
-  .badge.pix{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 40%,transparent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
-  .kv{display:grid;grid-template-columns:110px 1fr;gap:6px 12px;font-size:.86rem}
-  .kv .k{color:var(--muted)}
-  .kv .v{word-break:break-all;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem}
-  .row{display:flex;align-items:center;gap:12px}
-  .row+.row{margin-top:2px}
-  .toggle-row{display:flex;align-items:center;gap:14px;padding:12px;border-radius:14px;background:var(--surface2);border:1px solid var(--line)}
-  .toggle-row .txt{flex:1;min-width:0}
-  .toggle-row .txt b{font-size:.92rem;font-weight:600}
-  .toggle-row .txt small{display:block;color:var(--muted);font-size:.74rem;margin-top:2px}
-  .sw{position:relative;width:52px;height:30px;flex:0 0 auto;cursor:pointer}
+  .grow{flex:1}
+  .ic{background:none;border:none;color:var(--muted);font-size:1.35rem;cursor:pointer;padding:6px;border-radius:10px}
+  .ic:active{background:var(--surface2)}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+
+  /* status */
+  .stat-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .stat-top .lbl{font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+  .badge{font-size:.72rem;font-weight:600;padding:3px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+  .badge.dev{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,transparent)}
+  .badge.pix{color:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 40%,transparent)}
+  .fp{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;word-break:break-all;color:var(--text)}
+  .meta{margin-top:8px;font-size:.76rem;color:var(--muted)}
+
+  /* segmented source switch */
+  .seg{display:flex;background:var(--surface2);border-radius:12px;padding:4px;gap:4px}
+  .seg button{flex:1;border:none;background:none;color:var(--muted);font-size:.9rem;font-weight:600;
+    padding:11px;border-radius:9px;cursor:pointer;transition:.15s}
+  .seg button.on{background:var(--accent);color:#03121f}
+  .seg button:active{transform:scale(.98)}
+  .hint{font-size:.75rem;color:var(--muted);margin:10px 2px 0}
+  .util{display:flex;gap:10px;margin-top:14px}
+  .util button{flex:1;background:var(--surface2);border:1px solid var(--line);color:var(--text);
+    font-size:.84rem;font-weight:600;padding:10px;border-radius:11px;cursor:pointer}
+  .util button:active{transform:scale(.98)}
+  button:disabled{opacity:.5;pointer-events:none}
+
+  /* advanced */
+  details>summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;
+    font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+  details>summary::-webkit-details-marker{display:none}
+  details>summary .chev{transition:.2s}
+  details[open]>summary .chev{transform:rotate(180deg)}
+  .flags{display:flex;flex-direction:column;gap:1px;margin-top:14px}
+  .flag{display:flex;align-items:center;gap:12px;padding:11px 2px;font-size:.9rem}
+  .flag+.flag{border-top:1px solid var(--line)}
+  .flag span{flex:1}
+  .sw{position:relative;width:46px;height:27px;flex:0 0 auto;cursor:pointer}
   .sw input{display:none}
   .sw i{position:absolute;inset:0;background:var(--line);border-radius:999px;transition:.2s}
-  .sw i::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s}
-  .sw input:checked + i{background:var(--accent2)}
-  .sw input:checked + i::after{transform:translateX(22px)}
-  .btns{display:flex;flex-wrap:wrap;gap:10px}
-  button.act{flex:1;min-width:130px;border:none;border-radius:14px;padding:13px 14px;font-size:.9rem;font-weight:600;
-    cursor:pointer;color:#031018;background:linear-gradient(180deg,var(--accent),var(--accent2))}
-  button.act.ghost{background:var(--surface2);color:var(--text);border:1px solid var(--line)}
-  button.act:active{transform:scale(.97)}
-  button.act:disabled{opacity:.5;pointer-events:none}
-  .adv{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  @media (max-width:460px){.adv{grid-template-columns:1fr}.kv{grid-template-columns:96px 1fr}}
-  .flag{display:flex;align-items:center;gap:10px;padding:9px 11px;background:var(--surface2);border:1px solid var(--line);border-radius:12px;font-size:.84rem}
-  .flag .sw{width:44px;height:26px}
-  .flag .sw i::after{width:20px;height:20px}
-  .flag .sw input:checked + i::after{transform:translateX(18px)}
-  .flag span{flex:1}
-  details>summary{cursor:pointer;color:var(--muted);font-size:.82rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;list-style:none}
-  details>summary::-webkit-details-marker{display:none}
-  details[open]>summary{margin-bottom:12px}
-  #term{background:#0a0a0d;border:1px solid var(--line);border-radius:14px;padding:12px;
-    font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.76rem;line-height:1.5;
-    white-space:pre-wrap;word-break:break-word;max-height:240px;overflow:auto;color:#cfe6ff;min-height:44px}
+  .sw i::after{content:"";position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;background:#fff;transition:.2s}
+  .sw input:checked + i{background:var(--accent)}
+  .sw input:checked + i::after{transform:translateX(19px)}
+
+  /* output */
+  #term{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:11px;margin-top:12px;
+    font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.75rem;line-height:1.5;white-space:pre-wrap;
+    word-break:break-word;max-height:200px;overflow:auto;color:var(--accent-soft)}
   #term .e{color:var(--err)} #term .g{color:var(--ok)} #term .w{color:var(--warn)} #term .m{color:var(--muted)}
-  .termbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-  .termbar b{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-  .link{color:var(--muted);font-size:.72rem;text-decoration:none;cursor:pointer}
-  .spin{display:inline-block;width:13px;height:13px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+  .spin{display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-right-color:transparent;
+    border-radius:50%;animation:sp .7s linear infinite;vertical-align:-1px;margin-left:6px}
   @keyframes sp{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <svg class="logo" viewBox="0 0 24 24" fill="none"><path d="M12 2l8 4v6c0 4.4-3.1 8.2-8 10-4.9-1.8-8-5.6-8-10V6l8-4z" fill="var(--accent)" opacity=".18"/><path d="M12 2l8 4v6c0 4.4-3.1 8.2-8 10-4.9-1.8-8-5.6-8-10V6l8-4z" stroke="var(--accent)" stroke-width="1.5"/><path d="M8.5 12.2l2.4 2.4 4.6-4.8" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <svg viewBox="0 0 24 24" fill="none"><path d="M12 2l8 4v6c0 4.4-3.1 8.2-8 10-4.9-1.8-8-5.6-8-10V6l8-4z" fill="var(--accent-soft)" opacity=".16"/><path d="M12 2l8 4v6c0 4.4-3.1 8.2-8 10-4.9-1.8-8-5.6-8-10V6l8-4z" stroke="var(--accent-soft)" stroke-width="1.5"/><path d="M8.5 12.2l2.4 2.4 4.6-4.8" stroke="var(--accent-soft)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <div>
       <h1>Play Integrity Fork</h1>
-      <div class="sub" id="ver">device-fingerprint build</div>
+      <div class="sub" id="ver">device-fingerprint</div>
     </div>
-    <div class="spacer"></div>
-    <div class="icnbtn" id="refresh" title="Refresh">⟳</div>
+    <div class="grow"></div>
+    <button class="ic" id="refresh" title="Refresh">⟳</button>
   </header>
 
   <div class="card">
-    <div class="row" style="justify-content:space-between;margin-bottom:12px">
-      <h2 style="margin:0">Current spoof</h2>
-      <span class="badge" id="modeBadge">—</span>
-    </div>
-    <div class="kv" id="status">
-      <div class="k">Loading…</div><div class="v"></div>
-    </div>
+    <div class="stat-top"><span class="lbl">Active fingerprint</span><span class="badge" id="badge">—</span></div>
+    <div class="fp" id="fp">Loading…</div>
+    <div class="meta" id="meta"></div>
   </div>
 
   <div class="card">
-    <div class="toggle-row">
-      <div class="txt">
-        <b>Use this device's own fingerprint</b>
-        <small id="devHint">Auto-tracks OEM OTAs. Best on certified stock ROMs; on custom ROMs use a Pixel.</small>
-      </div>
-      <label class="sw"><input type="checkbox" id="devMode"><i></i></label>
+    <div class="seg" id="seg">
+      <button data-mode="device" id="segDevice">This device</button>
+      <button data-mode="pixel" id="segPixel">Pixel</button>
     </div>
-    <div class="btns" style="margin-top:12px">
-      <button class="act" id="applyDevice">Apply my fingerprint</button>
-      <button class="act ghost" id="fetchPixel">Fetch Pixel</button>
-      <button class="act ghost" id="killGms" style="flex:0 0 auto;min-width:0">Kill GMS</button>
+    <div class="hint" id="hint">This device — your own certified fingerprint, auto-tracks OTAs.</div>
+    <div class="util">
+      <button id="reapply">Re-apply</button>
+      <button id="killGms">Kill GMS</button>
     </div>
   </div>
 
   <div class="card">
     <details id="advBox">
-      <summary>Advanced settings ▾</summary>
-      <div class="adv" id="flags"></div>
+      <summary>Advanced settings <span class="chev">▾</span></summary>
+      <div class="flags" id="flags"></div>
     </details>
   </div>
 
   <div class="card">
-    <div class="termbar"><b>Output</b><span class="link" id="clear">clear</span></div>
-    <div id="term"><span class="m">Ready.</span></div>
+    <details id="outBox">
+      <summary>Output <span class="chev">▾</span></summary>
+      <div id="term"><span class="m">Ready.</span></div>
+    </details>
   </div>
 </div>
 
 <script>
-const MODID = "playintegrityfix";
-const MOD = "/data/adb/modules/" + MODID;
-const CFG = MOD + "/custom.pif.prop";
-const MARK = MOD + "/devicefingerprint";
-const FLAGS = ["spoofBuild","spoofProps","spoofProvider","spoofSignature","spoofVendingFinger","spoofVendingSdk","verboseLogs"];
-const FLAG_LABEL = {spoofBuild:"Spoof build",spoofProps:"Spoof props",spoofProvider:"Spoof provider",spoofSignature:"Spoof signature",spoofVendingFinger:"Vending finger",spoofVendingSdk:"Vending SDK",verboseLogs:"Verbose logs"};
+const MODID="playintegrityfix";
+const MOD="/data/adb/modules/"+MODID;
+const CFG=MOD+"/custom.pif.prop";
+const MARK=MOD+"/devicefingerprint";
+const FLAGS=["spoofBuild","spoofProps","spoofProvider","spoofSignature","spoofVendingFinger","spoofVendingSdk","verboseLogs"];
+const LABEL={spoofBuild:"Spoof build",spoofProps:"Spoof props",spoofProvider:"Spoof provider",spoofSignature:"Spoof signature",spoofVendingFinger:"Vending finger",spoofVendingSdk:"Vending SDK",verboseLogs:"Verbose logs"};
 
-const $ = s => document.querySelector(s);
-const term = $("#term");
-function log(msg, cls){ const s=document.createElement("span"); if(cls)s.className=cls; s.textContent=msg+"\n"; term.appendChild(s); term.scrollTop=term.scrollHeight; }
-function clearTerm(){ term.textContent=""; }
+const $=s=>document.querySelector(s);
+const term=$("#term");
+function log(m,c){const s=document.createElement("span");if(c)s.className=c;s.textContent=m+"\n";term.appendChild(s);term.scrollTop=term.scrollHeight;}
 
-// KernelSU / APatch / MMRL WebUI exec bridge (root).
-function exec(cmd, opts){
-  return new Promise((resolve,reject)=>{
-    if (typeof ksu === "undefined" || !ksu.exec){ reject(new Error("WebUI root bridge (ksu.exec) unavailable")); return; }
-    const cb = "__cb_" + Date.now() + "_" + Math.floor(performance.now()*1000%1e6);
-    window[cb] = (errno, stdout, stderr) => { delete window[cb]; resolve({errno:Number(errno)||0, stdout:stdout||"", stderr:stderr||""}); };
-    try { ksu.exec(cmd, JSON.stringify(opts||{}), cb); }
-    catch(e){ delete window[cb]; reject(e); }
+function exec(cmd,opts){
+  return new Promise((res,rej)=>{
+    if(typeof ksu==="undefined"||!ksu.exec){rej(new Error("root bridge (ksu.exec) unavailable"));return;}
+    const cb="__cb_"+Date.now()+"_"+Math.floor(performance.now()*1000%1e6);
+    window[cb]=(e,o,r)=>{delete window[cb];res({errno:Number(e)||0,stdout:o||"",stderr:r||""});};
+    try{ksu.exec(cmd,JSON.stringify(opts||{}),cb);}catch(err){delete window[cb];rej(err);}
   });
 }
-function toast(m){ try{ if(typeof ksu!=="undefined"&&ksu.toast) ksu.toast(m); }catch(e){} }
+function toast(m){try{if(typeof ksu!=="undefined"&&ksu.toast)ksu.toast(m);}catch(e){}}
 
 async function readConfig(){
-  const r = await exec(`cat ${CFG} 2>/dev/null`);
-  const map = {};
-  (r.stdout||"").split("\n").forEach(line=>{
-    const t=line.trim(); if(!t) return;
-    const commented = t.startsWith("#");
-    const body = commented ? t.replace(/^#+\s*/,"") : t;
-    const i = body.indexOf("="); if(i<0) return;
-    const k = body.slice(0,i).trim(); const v = body.slice(i+1).split("#")[0].trim();
-    map[k] = {value:v, commented};
-  });
-  return map;
+  const r=await exec(`cat ${CFG} 2>/dev/null`);const map={};
+  (r.stdout||"").split("\n").forEach(l=>{
+    const t=l.trim();if(!t)return;
+    const commented=t.startsWith("#");const body=commented?t.replace(/^#+\s*/,""):t;
+    const i=body.indexOf("=");if(i<0)return;
+    map[body.slice(0,i).trim()]={value:body.slice(i+1).split("#")[0].trim(),commented};
+  });return map;
 }
-
-function fpField(map, k){ return map[k] ? map[k].value : ""; }
+const val=(m,k)=>m[k]?m[k].value:"";
 
 async function refresh(){
-  let map={}, hasCfg=true, devMode=false;
-  try { map = await readConfig(); } catch(e){ log(e.message,"e"); }
-  hasCfg = Object.keys(map).length>0;
-  try { const m = await exec(`[ -f ${MARK} ] && echo 1 || echo 0`); devMode = (m.stdout.trim()==="1"); } catch(e){}
+  let map={},dev=false;
+  try{map=await readConfig();}catch(e){log(e.message,"e");}
+  try{dev=(await exec(`[ -f ${MARK} ] && echo 1 || echo 0`)).stdout.trim()==="1";}catch(e){}
+  const has=Object.keys(map).length>0;
+  const fp=val(map,"FINGERPRINT");const isPixel=/^google\//.test(fp);
 
-  $("#devMode").checked = devMode;
-  const fp = fpField(map,"FINGERPRINT");
-  const isPixel = /^google\//.test(fp);
-  const badge = $("#modeBadge");
-  if(!hasCfg){ badge.textContent="no config"; badge.className="badge"; }
-  else if(devMode){ badge.textContent="● device mode"; badge.className="badge dev"; }
-  else { badge.textContent = isPixel ? "● Pixel" : "● custom"; badge.className="badge pix"; }
+  const badge=$("#badge");
+  if(!has){badge.textContent="none";badge.className="badge";}
+  else if(dev){badge.textContent="● device";badge.className="badge dev";}
+  else{badge.textContent=isPixel?"● Pixel":"● custom";badge.className="badge pix";}
 
-  const st = $("#status");
-  if(!hasCfg){ st.innerHTML='<div class="k">No config yet</div><div class="v">Apply a fingerprint below.</div>'; }
-  else {
-    const rows = [
-      ["Manufacturer", fpField(map,"MANUFACTURER")],
-      ["Model", fpField(map,"MODEL")],
-      ["Fingerprint", fp],
-      ["API level", fpField(map,"*api_level")],
-      ["Sec. patch", (map["*.security_patch"] ? (map["*.security_patch"].commented?"(commented) ":"")+map["*.security_patch"].value : "")],
-    ];
-    st.innerHTML = rows.map(([k,v])=>`<div class="k">${k}</div><div class="v">${(v||"—").replace(/</g,"&lt;")}</div>`).join("");
-  }
+  $("#fp").textContent=has?fp:"No config yet — pick a source below.";
+  const patch=map["*.security_patch"]?(map["*.security_patch"].commented?"patch off":"patch "+map["*.security_patch"].value):"";
+  $("#meta").textContent=has?[val(map,"MODEL"),val(map,"*api_level")?"API "+val(map,"*api_level"):"",patch].filter(Boolean).join("  ·  "):"";
 
-  // advanced flags
-  const fl = $("#flags"); fl.innerHTML="";
+  $("#segDevice").classList.toggle("on",dev);
+  $("#segPixel").classList.toggle("on",!dev&&has);
+  $("#hint").textContent=dev
+    ?"This device — your own certified fingerprint, auto-tracks OTAs."
+    :"Pixel — a fetched Canary fingerprint (expires ~6 weeks).";
+
+  const fl=$("#flags");fl.innerHTML="";
   FLAGS.forEach(k=>{
-    const on = map[k] && map[k].value==="1";
-    const el = document.createElement("label"); el.className="flag";
-    el.innerHTML = `<span>${FLAG_LABEL[k]}</span><span class="sw"><input type="checkbox" ${on?"checked":""}><i></i></span>`;
-    el.querySelector("input").addEventListener("change", e=> setFlag(k, e.target.checked?"1":"0"));
+    const on=map[k]&&map[k].value==="1";
+    const el=document.createElement("label");el.className="flag";
+    el.innerHTML=`<span>${LABEL[k]}</span><span class="sw"><input type="checkbox" ${on?"checked":""}><i></i></span>`;
+    el.querySelector("input").addEventListener("change",e=>setFlag(k,e.target.checked?"1":"0"));
     fl.appendChild(el);
   });
 }
 
-async function setFlag(key, val){
-  try{
-    await exec(`sed -i 's;^\\(${key}=\\).*;\\1${val};' ${CFG}`);
-    toast(`${FLAG_LABEL[key]} = ${val==="1"?"on":"off"}`);
-    log(`set ${key}=${val}`,"m");
-  }catch(e){ log("setFlag: "+e.message,"e"); }
+async function setFlag(k,v){
+  try{await exec(`sed -i 's;^\\(${k}=\\).*;\\1${v};' ${CFG}`);toast(`${LABEL[k]} ${v==="1"?"on":"off"}`);log(`set ${k}=${v}`,"m");}
+  catch(e){log(e.message,"e");}
 }
 
-function busy(b){ document.querySelectorAll("button.act").forEach(x=>x.disabled=b); }
+function busy(b){document.querySelectorAll("button").forEach(x=>x.disabled=b);$("#refresh").disabled=false;}
 
-async function runScript(args, label){
-  busy(true); log("\n$ autopif4.sh "+args, "g");
+async function run(args,label){
+  $("#outBox").open=true;log("\n$ autopif4 "+args,"g");
   try{
-    const r = await exec(`sh ${MOD}/autopif4.sh ${args} 2>&1`);
-    (r.stdout||"").split("\n").forEach(l=>{ if(l.trim()) log(l, /error|fail/i.test(l)?"e":(/warn/i.test(l)?"w":null)); });
-    log(r.errno===0 ? "✓ "+label+" done" : "✗ exit "+r.errno, r.errno===0?"g":"e");
-  }catch(e){ log(e.message,"e"); }
-  await refresh(); busy(false);
+    const r=await exec(`sh ${MOD}/autopif4.sh ${args} 2>&1`);
+    (r.stdout||"").split("\n").forEach(l=>l.trim()&&log(l,/error|fail/i.test(l)?"e":(/warn/i.test(l)?"w":null)));
+    log(r.errno===0?"✓ "+label:"✗ exit "+r.errno,r.errno===0?"g":"e");
+  }catch(e){log(e.message,"e");}
 }
 
-$("#applyDevice").onclick = ()=> runScript("--device","device fingerprint");
-$("#fetchPixel").onclick = ()=> runScript("-m","Pixel fetch");
-$("#killGms").onclick = async ()=>{ busy(true); log("\n$ killpi.sh","g"); try{ const r=await exec(`sh ${MOD}/killpi.sh 2>&1`); (r.stdout||"").split("\n").forEach(l=>l.trim()&&log(l,"m")); log("✓ GMS killed","g"); }catch(e){ log(e.message,"e"); } busy(false); };
-$("#refresh").onclick = ()=> refresh();
-$("#clear").onclick = clearTerm;
-
-$("#devMode").addEventListener("change", async e=>{
-  const on = e.target.checked;
+async function setSource(mode){
+  busy(true);
   try{
-    if(on){ await exec(`touch ${MARK}`); toast("Device mode ON"); log("device mode enabled; applying…","m"); await runScript("--device","device fingerprint"); }
-    else { await exec(`rm -f ${MARK}`); toast("Device mode OFF"); log("device mode disabled (Fetch Pixel to switch now)","m"); await refresh(); }
-  }catch(err){ log(err.message,"e"); }
-});
+    if(mode==="device"){await exec(`touch ${MARK}`);toast("Device fingerprint");await run("--device","device fingerprint applied");}
+    else{await exec(`rm -f ${MARK}`);toast("Pixel fingerprint");await run("-m","Pixel applied");}
+  }catch(e){log(e.message,"e");}
+  await refresh();busy(false);
+}
+
+$("#segDevice").onclick=()=>setSource("device");
+$("#segPixel").onclick=()=>setSource("pixel");
+$("#reapply").onclick=async()=>{const dev=$("#segDevice").classList.contains("on");await setSource(dev?"device":"pixel");};
+$("#killGms").onclick=async()=>{busy(true);$("#outBox").open=true;log("\n$ killpi","g");try{const r=await exec(`sh ${MOD}/killpi.sh 2>&1`);(r.stdout||"").split("\n").forEach(l=>l.trim()&&log(l,"m"));log("✓ GMS killed","g");}catch(e){log(e.message,"e");}busy(false);};
+$("#refresh").onclick=refresh;
 
 (async()=>{
-  try{ const v = await exec(`grep '^version=' ${MOD}/module.prop | cut -d= -f2`); if(v.stdout.trim()) $("#ver").textContent = v.stdout.trim()+" · device-fingerprint"; }catch(e){}
+  try{const v=await exec(`grep '^version=' ${MOD}/module.prop | cut -d= -f2`);if(v.stdout.trim())$("#ver").textContent=v.stdout.trim()+" · device-fingerprint";}catch(e){}
   await refresh();
 })();
 </script>
