@@ -11,10 +11,14 @@
     --text:#eaeaef; --muted:#9a9aa6; --accent:#4d9fff; --accent-soft:#7cc4ff;
     --ok:#39d98a; --warn:#ffcc66; --err:#ff6b6b; --r:16px;
   }
+  /* system light, unless the user forced dark */
   @media (prefers-color-scheme:light){
-    :root{ --bg:#f5f5f8; --surface:#fff; --surface2:#eeeef2; --line:#e3e3ea;
+    :root:not([data-theme="dark"]){ --bg:#f5f5f8; --surface:#fff; --surface2:#eeeef2; --line:#e3e3ea;
       --text:#16161a; --muted:#65656f; --accent:#0a6cff; --accent-soft:#0a6cff; }
   }
+  /* manual override */
+  :root[data-theme="light"]{ --bg:#f5f5f8; --surface:#fff; --surface2:#eeeef2; --line:#e3e3ea;
+    --text:#16161a; --muted:#65656f; --accent:#0a6cff; --accent-soft:#0a6cff; }
   *{box-sizing:border-box}
   html,body{margin:0}
   body{
@@ -65,7 +69,7 @@
   .flags{display:flex;flex-direction:column;gap:1px;margin-top:14px}
   .flag{display:flex;align-items:center;gap:12px;padding:11px 2px;font-size:.9rem}
   .flag+.flag{border-top:1px solid var(--line)}
-  .flag span{flex:1}
+  .flag>span:not(.sw){flex:1}
   .sw{position:relative;width:46px;height:27px;flex:0 0 auto;cursor:pointer}
   .sw input{display:none}
   .sw i{position:absolute;inset:0;background:var(--line);border-radius:999px;transition:.2s}
@@ -92,6 +96,7 @@
       <div class="sub" id="ver">device-fingerprint</div>
     </div>
     <div class="grow"></div>
+    <button class="ic" id="theme" title="Theme">☾</button>
     <button class="ic" id="refresh" title="Refresh">⟳</button>
   </header>
 
@@ -223,6 +228,20 @@ $("#segPixel").onclick=()=>setSource("pixel");
 $("#reapply").onclick=async()=>{const dev=$("#segDevice").classList.contains("on");await setSource(dev?"device":"pixel");};
 $("#killGms").onclick=async()=>{busy(true);$("#outBox").open=true;log("\n$ killpi","g");try{const r=await exec(`sh ${MOD}/killpi.sh 2>&1`);(r.stdout||"").split("\n").forEach(l=>l.trim()&&log(l,"m"));log("✓ GMS killed","g");}catch(e){log(e.message,"e");}busy(false);};
 $("#refresh").onclick=refresh;
+
+// theme: system by default, manual override persisted
+function curTheme(){
+  const t=document.documentElement.getAttribute("data-theme");
+  if(t)return t;
+  return (window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches)?"light":"dark";
+}
+function applyTheme(t){
+  const root=document.documentElement;
+  if(t==="light"||t==="dark")root.setAttribute("data-theme",t);else root.removeAttribute("data-theme");
+  $("#theme").textContent=curTheme()==="light"?"☀":"☾";
+}
+try{applyTheme(localStorage.getItem("pif-theme"));}catch(e){applyTheme(null);}
+$("#theme").onclick=()=>{const n=curTheme()==="light"?"dark":"light";try{localStorage.setItem("pif-theme",n);}catch(e){}applyTheme(n);};
 
 (async()=>{
   try{const v=await exec(`grep '^version=' ${MOD}/module.prop | cut -d= -f2`);if(v.stdout.trim())$("#ver").textContent=v.stdout.trim()+" · device-fingerprint";}catch(e){}
