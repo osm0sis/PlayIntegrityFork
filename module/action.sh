@@ -6,7 +6,13 @@ if [ -n "$ASH_STANDALONE" ]; then
     unset ASH_STANDALONE
 fi
 
-sh $MODPATH/autopif4.sh -m || exit 1
+# Honor the device-fingerprint marker: use this device's own certified
+# fingerprint instead of matching/fetching a Pixel Canary.
+if [ -f "$MODPATH/devicefingerprint" ]; then
+    sh $MODPATH/autopif4.sh --device || exit 1
+else
+    sh $MODPATH/autopif4.sh -m || exit 1
+fi
 
 echo -e "\nDone!"
 
