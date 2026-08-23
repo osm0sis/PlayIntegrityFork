@@ -232,7 +232,9 @@ if [ "$DIR" = /data/adb/modules/playintegrityfix/autopif4 ]; then
   item "Installing new prop ...";
   cp -fv $NEWNAME ..;
   TS_DIR=/data/adb/tricky_store;
-  if [ -d "$TS_DIR" ]; then
+  if [ -d /data/adb/teesim -o -d /data/adb/omk ]; then
+    warn "TEESimulator v4.x/Oh My KeyMint must be configured manually, ensure patch levels match *.security_patch";
+  elif [ -d "$TS_DIR" ]; then
     TS_SECPAT=$TS_DIR/security_patch.txt;
     touch $TS_SECPAT;
     if [ -f /data/adb/modules/tricky_store/libTEESimulator.so -o -f /data/adb/modules/tricky_store/libTrickyStoreOSS.so ]; then
