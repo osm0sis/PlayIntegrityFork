@@ -187,7 +187,7 @@ if [ -f "$MIGRATE" ]; then
   fi;
   if [ "$FORCE_STRONG" ]; then
     item "Forcing configuration for <A13 PI Strong ...";
-    ARGS="-a"; PATCH_COMMENT=1; spoofProvider=0;
+    ARGS="-a"; PATCH_COMMENT=1; spoofProvider=0; spoofProps=0;
   else
     item "Retaining existing configuration ...";
   fi;
