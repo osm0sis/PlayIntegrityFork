@@ -6,7 +6,7 @@ if [ -n "$ASH_STANDALONE" ]; then
     unset ASH_STANDALONE
 fi
 
-sh $MODPATH/autopif4.sh -m || exit 1
+sh $MODPATH/autopif4.sh || exit 1
 
 echo -e "\nDone!"
 
