@@ -6,10 +6,14 @@ find_package(cxx REQUIRED CONFIG)
 
 link_libraries(cxx::cxx)
 
+set(SHADOWHOOK_STATIC ON)
+
+add_subdirectory(shadowhook/shadowhook/src/main/cpp)
+
+include_directories(shadowhook/shadowhook/src/main/cpp/include)
+
 add_library(${CMAKE_PROJECT_NAME} SHARED main.cpp local_cxa_atexit_finalize_impl/atexit.cpp)
 
-add_subdirectory(Dobby)
+target_compile_features(${CMAKE_PROJECT_NAME} PRIVATE c_std_23 cxx_std_23)
 
-SET_OPTION(Plugin.Android.BionicLinkerUtil ON)
-
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE log dobby_static)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE log shadowhook)

@@ -15,7 +15,8 @@ android {
     packaging {
         jniLibs {
             excludes += "**/liblog.so"
-            excludes += "**/libdobby.so"
+            excludes += "**/libshadowhook.so"
+            excludes += "**/libshadowhook_nothing.so"
         }
     }
 
@@ -25,6 +26,11 @@ android {
         targetSdk = 37
         versionCode = 1
         versionName = "1.0"
+
+        ndk {
+            abiFilters += "armeabi-v7a"
+            abiFilters += "arm64-v8a"
+        }
 
         externalNativeBuild {
             cmake {
