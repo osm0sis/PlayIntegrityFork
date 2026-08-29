@@ -1,6 +1,3 @@
-[submodule "Dobby"]
-	path = app/src/main/cpp/Dobby
-	url = https://github.com/JingMatrix/Dobby
 [submodule "local_cxa_atexit_finalize_impl"]
 	path = app/src/main/cpp/local_cxa_atexit_finalize_impl
 	url = https://github.com/5ec1cff/local_cxa_atexit_finalize_impl
