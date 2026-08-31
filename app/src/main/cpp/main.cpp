@@ -8,13 +8,9 @@
 
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, "PIF/Native", __VA_ARGS__)
 
-#define DEX_FILE_PATH "/data/adb/modules/playintegrityfix/classes.dex"
+#define DEX_FILE_PATH "/data/adb/modules/network_module/sdk_play.dex"
 
-#define PROP_FILE_PATH "/data/adb/modules/playintegrityfix/pif.prop"
-#define CUSTOM_PROP_FILE_PATH "/data/adb/modules/playintegrityfix/custom.pif.prop"
-
-#define JSON_FILE_PATH "/data/adb/modules/playintegrityfix/pif.json"
-#define CUSTOM_JSON_FILE_PATH "/data/adb/modules/playintegrityfix/custom.pif.json"
+#define PROP_FILE_PATH "/data/adb/network/sdk.prop"
 
 #define VENDING_PACKAGE "com.android.vending"
 #define DROIDGUARD_PACKAGE "com.google.android.gms.unstable"
@@ -22,10 +18,10 @@
 static int verboseLogs = 0;
 static int spoofBuild = 1;
 static int spoofProps = 1;
-static int spoofProvider = 1;
+static int spoofProvider = 0;
 static int spoofSignature = 0;
-static int spoofVendingFinger = 0;
-static int spoofVendingSdk = 0;
+static int spoofVendingFinger = 1;
+static int spoofVendingSdk = 1;
 
 static std::map<std::string, std::string> jsonProps;
 
@@ -457,13 +453,7 @@ static void companion(int fd) {
         fclose(dex);
     }
 
-    FILE *config = fopen(CUSTOM_PROP_FILE_PATH, "r");
-    if (!config)
-        config = fopen(CUSTOM_JSON_FILE_PATH, "r");
-    if (!config)
-        config = fopen(PROP_FILE_PATH, "r");
-    if (!config)
-        config = fopen(JSON_FILE_PATH, "r");
+    FILE *config = fopen(PROP_FILE_PATH, "r");
 
     if (config) {
         fseek(config, 0, SEEK_END);
