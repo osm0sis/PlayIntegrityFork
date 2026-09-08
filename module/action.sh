@@ -6,7 +6,9 @@ if [ -n "$ASH_STANDALONE" ]; then
     unset ASH_STANDALONE
 fi
 
-sh $MODPATH/autopif4.sh -m || exit 1
+[ -f "$MODPATH/skipmatchmode" ] || MATCHMODE=-m
+
+sh $MODPATH/autopif4.sh $MATCHMODE || exit 1
 
 echo -e "\nDone!"
 
