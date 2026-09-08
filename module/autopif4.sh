@@ -87,6 +87,7 @@ MODEL_LIST="$(grep -A1 'tr id=' PIXEL_${SRC}_HTML | grep 'td' | sed 's;.*<td>\(.
 PRODUCT_LIST="$(grep 'tr id=' PIXEL_${SRC}_HTML | sed 's;.*<tr id="\(.*\)">.*;\1_beta;')";
 echo "$PRODUCT_LIST" | wc -w;
 
+item "Selecting Pixel Beta device ...";
 if [ "$FORCE_MATCH" ]; then
   DEVICE="$(getprop ro.product.device)";
   case "$(echo ' '$PRODUCT_LIST' ')" in
@@ -96,28 +97,37 @@ if [ "$FORCE_MATCH" ]; then
     ;;
   esac;
 fi;
-item "Selecting Pixel Beta device ...";
+set_random_beta() {
+  local list_count="$(echo "$MODEL_LIST" | wc -l)";
+  local list_rand="$((RANDOM % $list_count + 1))";
+  local IFS=$'\n';
+  set -- $MODEL_LIST;
+  MODEL="$(eval echo \${$list_rand})";
+  set -- $PRODUCT_LIST;
+  PRODUCT="$(eval echo \${$list_rand})";
+  DEVICE="$(echo "$PRODUCT" | sed 's/_beta//')";
+}
 if [ -z "$PRODUCT" ]; then
-  set_random_beta() {
-    local list_count="$(echo "$MODEL_LIST" | wc -l)";
-    local list_rand="$((RANDOM % $list_count + 1))";
-    local IFS=$'\n';
-    set -- $MODEL_LIST;
-    MODEL="$(eval echo \${$list_rand})";
-    set -- $PRODUCT_LIST;
-    PRODUCT="$(eval echo \${$list_rand})";
-    DEVICE="$(echo "$PRODUCT" | sed 's/_beta//')";
-  }
   set_random_beta;
 fi;
 echo "$MODEL ($PRODUCT)";
 
-item "Crawling Android Flash Tool for latest Pixel Canary build info ...";
-wget -q -T 10 -O PIXEL_FLASH_HTML --no-check-certificate "https://flash.android.com/" 2>&1 || exit 1;
-wget -q -T 10 -O PIXEL_STATION_JSON --header "Referer: https://flash.android.com" --no-check-certificate "https://content-flashstation-pa.googleapis.com/v1/builds?product=$PRODUCT&key=$(grep -o '<body data-client-config=.*' PIXEL_FLASH_HTML | cut -d\; -f2 | cut -d\& -f1)" 2>&1 || exit 1;
-tac PIXEL_STATION_JSON | grep -m1 -A13 '"canary": true' > PIXEL_CANARY_JSON;
-ID="$(grep 'releaseCandidateName' PIXEL_CANARY_JSON | cut -d\" -f4)";
-INCREMENTAL="$(grep 'buildId' PIXEL_CANARY_JSON | cut -d\" -f4)";
+get_canary_info() {
+  item "Crawling Android Flash Tool for latest Pixel Canary build info ...";
+  wget -q -T 10 -O PIXEL_FLASH_HTML --no-check-certificate "https://flash.android.com/" 2>&1 || exit 1;
+  wget -q -T 10 -O PIXEL_STATION_JSON --header "Referer: https://flash.android.com" --no-check-certificate "https://content-flashstation-pa.googleapis.com/v1/builds?product=$PRODUCT&key=$(grep -o '<body data-client-config=.*' PIXEL_FLASH_HTML | cut -d\; -f2 | cut -d\& -f1)" 2>&1 || exit 1;
+  tac PIXEL_STATION_JSON | grep -m1 -A13 '"canary": true' > PIXEL_CANARY_JSON;
+  ID="$(grep 'releaseCandidateName' PIXEL_CANARY_JSON | cut -d\" -f4)";
+  INCREMENTAL="$(grep 'buildId' PIXEL_CANARY_JSON | cut -d\" -f4)";
+}
+get_canary_info;
+if [ -z "$ID" -o -z "$INCREMENTAL" ] && [ "$FORCE_MATCH" ]; then
+  warn "Failed to extract matching build info from JSON";
+  item "Retrying with random Pixel Beta device ...";
+  set_random_beta;
+  echo "$MODEL ($PRODUCT)";
+  get_canary_info;
+fi;
 [ -z "$ID" -o -z "$INCREMENTAL" ] && die "Failed to extract build info from JSON";
 echo "Android $(grep 'releaseTrackVersionName' PIXEL_CANARY_JSON | cut -d\" -f4)";
 
