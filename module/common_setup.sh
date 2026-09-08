@@ -67,7 +67,7 @@ done
 
 if ! $SKIPPERSISTPROP; then
     # Work around custom ROM PropImitationHooks conflict when their persist props don't exist
-    if [ -n "$(resetprop ro.aospa.version)" -o -n "$(resetprop net.pixelos.version)" -o -n "$(resetprop ro.afterlife.version)" -o -f /data/system/gms_certified_props.json ]; then
+    if resetprop | grep -qE "ro.aospa.version|net.pixelos.version|ro.afterlife.version" || [ -f /data/system/gms_certified_props.json ]; then
         for PROP in persist.sys.pihooks.first_api_level persist.sys.pihooks.security_patch; do
             resetprop | grep -q "\[$PROP\]" || persistprop "$PROP" ""
         done
