@@ -97,27 +97,12 @@ if [ -n "$ID" ] && ! grep_check_config build.id; then
   item 'Simple entry ID found, changing to ID field and "*.build.id" property ...';
 fi;
 
-if [ -z "$ID" ] && grep_check_config BUILD_ID; then
-  item 'Deprecated entry BUILD_ID found, changing to ID field and "*.build.id" property ...';
-  ID="$(grep_get_config BUILD_ID)";
-fi;
-
 if [ -n "$SECURITY_PATCH" ] && ! grep_check_config security_patch; then
   item 'Simple entry SECURITY_PATCH found, changing to SECURITY_PATCH field and "*.security_patch" property ...';
 fi;
 
-if grep_check_config VNDK_VERSION; then
-  item 'Deprecated entry VNDK_VERSION found, changing to "*.vndk.version" property ...';
-  VNDK_VERSION="$(grep_get_config VNDK_VERSION)";
-fi;
-
 if [ -n "$DEVICE_INITIAL_SDK_INT" ] && ! grep_check_config api_level; then
   item 'Simple entry DEVICE_INITIAL_SDK_INT found, changing to DEVICE_INITIAL_SDK_INT field and "*api_level" property ...';
-fi;
-
-if [ -z "$DEVICE_INITIAL_SDK_INT" ] && grep_check_config FIRST_API_LEVEL; then
-  item 'Deprecated entry FIRST_API_LEVEL found, changing to DEVICE_INITIAL_SDK_INT field and "*api_level" property ...';
-  DEVICE_INITIAL_SDK_INT="$(grep_get_config FIRST_API_LEVEL)";
 fi;
 
 if [ -z "$RELEASE" -o -z "$INCREMENTAL" -o -z "$TYPE" -o -z "$TAGS" -o "$OVERRIDE" ]; then
@@ -198,7 +183,6 @@ done;
 echo "$N$CMNT System Properties";
 echo "$PRE"'*.build.id'"$MID$ID$POST";
 echo "$SECPRE1$SECURITY_COMMENT$SECPRE2"'*.security_patch'"$MID$SECURITY_PATCH$POST";
-[ -z "$VNDK_VERSION" ] || echo "$PRE"'*.vndk.version'"$MID$VNDK_VERSION$POST";
 echo "$PRE"'*api_level'"$MID$DEVICE_INITIAL_SDK_INT$POST";
 if [ "$ADVANCED" ]; then
   echo "$N$CMNT Advanced Settings";
