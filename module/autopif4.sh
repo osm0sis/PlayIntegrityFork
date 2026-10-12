@@ -88,8 +88,12 @@ PRODUCT_LIST="$(grep 'tr id=' PIXEL_${SRC}_HTML | sed 's;.*<tr id="\(.*\)">.*;\1
 echo "$PRODUCT_LIST" | wc -w;
 
 item "Selecting Pixel Beta device ...";
+DEVICE="$(getprop ro.product.device)";
+case $DEVICE in
+  frankel|blazer|mustang|rango) unset FORCE_MATCH;; # Pixel 10 Series
+  cubs|grizzly|kodiak|yogi) unset FORCE_MATCH;; # Pixel 11 Series
+esac;
 if [ "$FORCE_MATCH" ]; then
-  DEVICE="$(getprop ro.product.device)";
   case "$(echo ' '$PRODUCT_LIST' ')" in
     *" ${DEVICE}_beta "*)
       MODEL="$(getprop ro.product.model)";
@@ -170,6 +174,24 @@ if [ -z "$SECURITY_PATCH" ]; then
 fi;
 echo "$SECURITY_PATCH";
 
+item "Adding corresponding first API level ...";
+case $DEVICE in
+  bluejay) DEVICE_INITIAL_SDK_INT=32;; # Pixel 6a
+  panther|cheetah) DEVICE_INITIAL_SDK_INT=33;; # Pixel 7 Series
+  lynx) DEVICE_INITIAL_SDK_INT=33;; # Pixel 7a
+  felix) DEVICE_INITIAL_SDK_INT=33;; # Pixel Fold
+  tangorpro) DEVICE_INITIAL_SDK_INT=33;; # Pixel Tablet
+  shiba|husky) DEVICE_INITIAL_SDK_INT=34;; # Pixel 8 Series
+  akita) DEVICE_INITIAL_SDK_INT=34;; # Pixel 8a
+  tokay|caiman|komodo|comet) DEVICE_INITIAL_SDK_INT=34;; # Pixel 9 Series
+  tegu) DEVICE_INITIAL_SDK_INT=35;; # Pixel 9a
+  frankel|blazer|mustang|rango) DEVICE_INITIAL_SDK_INT=36;; # Pixel 10 Series
+  stallion) DEVICE_INITIAL_SDK_INT=35;; # Pixel 10a; Actual 36
+  cubs|grizzly|kodiak|yogi) DEVICE_INITIAL_SDK_INT=37;; # Pixel 11 Series
+  *) DEVICE_INITIAL_SDK_INT=37;;
+esac;
+echo "$DEVICE_INITIAL_SDK_INT";
+
 item "Dumping values to minimal pif.prop ...";
 cat <<EOF | tee pif.prop;
 MANUFACTURER=Google
@@ -178,7 +200,7 @@ FINGERPRINT=google/$PRODUCT/$DEVICE:CANARY/$ID/$INCREMENTAL:user/release-keys
 PRODUCT=$PRODUCT
 DEVICE=$DEVICE
 SECURITY_PATCH=$SECURITY_PATCH
-DEVICE_INITIAL_SDK_INT=32
+DEVICE_INITIAL_SDK_INT=$DEVICE_INITIAL_SDK_INT
 EOF
 
 for MIGRATE in migrate.sh /data/adb/modules/playintegrityfix/migrate.sh; do
@@ -189,7 +211,7 @@ if [ -f "$MIGRATE" ]; then
     [ -f "$OLDPIF" ] && break;
   done;
   if [ -f "$OLDPIF" ]; then
-    grep -qE '//"\*.security_patch"|#\*.security_patch' $OLDPIF && PATCH_COMMENT=1;
+    grep -qE '//"*.security_patch"|#*.security_patch' $OLDPIF && PATCH_COMMENT=1;
     grep -qE "verboseLogs|VERBOSE_LOGS" $OLDPIF && ARGS="-a";
   else
     FORCE_STRONG=1;
@@ -221,7 +243,7 @@ if [ -f "$MIGRATE" ]; then
       [ -n "$TMPVAL" ] && sed -i "s;\($SETTING=\).;\1$TMPVAL;" custom.pif.prop;
     done;
   fi;
-  [ "$PATCH_COMMENT" ] && sed -i 's;\*.security_patch;#\*.security_patch;' custom.pif.prop;
+  [ "$PATCH_COMMENT" ] && sed -i 's;ro.build.version.security_patch;#ro.build.version.security_patch;' custom.pif.prop;
   echo "\n# Canary Released: $CANARY_REL_DATE\n# Estimated Expiry: $CANARY_EXP_DATE" >> custom.pif.prop;
   cat custom.pif.prop;
 fi;

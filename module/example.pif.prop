@@ -21,9 +21,13 @@ SECURITY_PATCH=
 DEVICE_INITIAL_SDK_INT=
 
 # System Properties
-*.build.id=        # for ro.build.id
-*.security_patch=  # for ro.build.version.security_patch
-*api_level=        # for ro.board.api_level, ro.board.first_api_level, ro.product.first_api_level and ro.vendor.api_level
+ro.build.fingerprint=
+ro.build.id=
+ro.product.device=
+ro.product.name=
+ro.build.version.security_patch=
+ro.board.first_api_level=32  # needed to override conflicting ROM values >32
+ro.product.first_api_level=
 
 # Advanced Settings
 spoofBuild=1
