@@ -77,7 +77,7 @@ cd "$DIR";
 
 item "Crawling Android Developers for latest Pixel Beta device list ...";
 wget -q -T 10 -O PIXEL_VERSIONS_HTML --no-check-certificate "https://developer.android.com/about/versions" 2>&1 || exit 1;
-LATEST_BETA=$(grep -B4 -A2 'data-icon=\"preview' PIXEL_VERSIONS_HTML | grep -o 'href="/about/versions/.*[0-9]"' | cut -d\" -f2);
+LATEST_BETA=$(grep -B4 -A2 'data-icon="preview' PIXEL_VERSIONS_HTML | grep -o 'href="/about/versions/.*[0-9]"' | cut -d\" -f2);
 [ "$LATEST_BETA" ] || LATEST_BETA=$(grep -oE 'href="/about/versions/[0-9]{2}"' PIXEL_VERSIONS_HTML | cut -d\" -f2 | sort -ru | head -n1);
 wget -q -T 10 -O PIXEL_LATEST_HTML --no-check-certificate "https://developer.android.com$LATEST_BETA" 2>&1 || exit 1;
 wget -q -T 10 -O PIXEL_FI_HTML --no-check-certificate "https://developer.android.com$(grep -o 'href=".*download.*"' PIXEL_LATEST_HTML | grep -v 'ota' | cut -d\" -f2 | sort -ru | head -n1)" 2>&1 || exit 1;
@@ -189,8 +189,7 @@ if [ -f "$MIGRATE" ]; then
     [ -f "$OLDPIF" ] && break;
   done;
   if [ -f "$OLDPIF" ]; then
-    grep -q '//"\*.security_patch"' $OLDPIF && PATCH_COMMENT=1;
-    grep -q '#\*.security_patch' $OLDPIF && PATCH_COMMENT=1;
+    grep -qE '//"\*.security_patch"|#\*.security_patch' $OLDPIF && PATCH_COMMENT=1;
     grep -qE "verboseLogs|VERBOSE_LOGS" $OLDPIF && ARGS="-a";
   else
     FORCE_STRONG=1;
@@ -201,7 +200,7 @@ if [ -f "$MIGRATE" ]; then
   else
     item "Retaining existing configuration ...";
   fi;
-  [ -d /data/adb/tricky_store ] && unset PATCH_COMMENT;
+  [ -d /data/adb/tricky_store -o -d /data/adb/teesim -o -d /data/adb/omk ] && unset PATCH_COMMENT;
   item "Converting pif.prop to custom.pif.prop with migrate.sh:";
   rm -f pif.json custom.pif.json custom.pif.prop;
   sh $MIGRATE -i $ARGS pif.prop;
