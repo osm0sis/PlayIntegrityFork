@@ -88,12 +88,8 @@ PRODUCT_LIST="$(grep 'tr id=' PIXEL_${SRC}_HTML | sed 's;.*<tr id="\(.*\)">.*;\1
 echo "$PRODUCT_LIST" | wc -w;
 
 item "Selecting Pixel Beta device ...";
-DEVICE="$(getprop ro.product.device)";
-case $DEVICE in
-  frankel|blazer|mustang|rango) unset FORCE_MATCH;; # Pixel 10 Series
-  cubs|grizzly|kodiak|yogi) unset FORCE_MATCH;; # Pixel 11 Series
-esac;
 if [ "$FORCE_MATCH" ]; then
+  DEVICE="$(getprop ro.product.device)";
   case "$(echo ' '$PRODUCT_LIST' ')" in
     *" ${DEVICE}_beta "*)
       MODEL="$(getprop ro.product.model)";
@@ -191,6 +187,7 @@ case $DEVICE in
   *) DEVICE_INITIAL_SDK_INT=37;;
 esac;
 echo "$DEVICE_INITIAL_SDK_INT";
+[ "$DEVICE_INITIAL_SDK_INT" -gt 35 ] && warn "First API level 36 and greater may require an RKP keybox to pass";
 
 item "Dumping values to minimal pif.prop ...";
 cat <<EOF | tee pif.prop;
