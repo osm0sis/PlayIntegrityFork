@@ -14,6 +14,17 @@ delprop_if_exist() {
 SKIPPERSISTPROP=false
 [ -f "$MODPATH/skippersistprop" ] && SKIPPERSISTPROP=true
 
+# fix_persist_file
+fix_persist_file() {
+    local FILE=/data/property/persistent_properties
+
+    # Some resetprop implementations (KernelSU via resetprop-rs) don't keep the file's 0600 mode,
+    # and init then ignores all persist props as an insecure file on the next boot
+    [ -f "$FILE" ] || return 0
+    chown 0:0 "$FILE"
+    chmod 0600 "$FILE"
+}
+
 # persistprop <prop name> <new value>
 persistprop() {
     local NAME="$1"
@@ -26,8 +37,12 @@ persistprop() {
         else
             echo "resetprop -p --delete \"$NAME\"" >> $MODPATH/uninstall.sh
         fi
+        # Keep the persist file permissions fix as the last uninstall step
+        sed -i '/persistent_properties/d' $MODPATH/uninstall.sh 2>/dev/null
+        echo 'FILE=/data/property/persistent_properties; [ -f $FILE ] && chown 0:0 $FILE && chmod 0600 $FILE' >> $MODPATH/uninstall.sh
     fi
     resetprop -n -p "$NAME" "$NEWVALUE"
+    fix_persist_file
 }
 
 RESETPROP="resetprop -n"

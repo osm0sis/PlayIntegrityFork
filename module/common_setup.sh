@@ -88,4 +88,5 @@ if ! $SKIPPERSISTPROP; then
     fi
 elif [ "$MODPATH/uninstall.sh" ]; then
     sh $MODPATH/uninstall.sh
+    fix_persist_file
 fi
