@@ -6,9 +6,9 @@ if [ -n "$ASH_STANDALONE" ]; then
     unset ASH_STANDALONE
 fi
 
-[ -f "$MODPATH/skipmatchmode" ] || MATCHMODE=-m
+[ -f "$MODPATH/skipmatchdevice" ] || MATCHFLAG=-m
 
-sh $MODPATH/autopif4.sh $MATCHMODE || exit 1
+sh $MODPATH/autopif4.sh $MATCHFLAG || exit 1
 
 echo -e "\nDone!"
 
