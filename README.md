@@ -172,7 +172,7 @@ The advanced spoofing options add granular control over what exactly gets spoofe
 
 - For spoofing locked bootloader and attempting to pass <A13 PI STRONG integrity, or A13+ PI DEVICE or STRONG integrity, I only recommend using the latest official [Tricky Store](https://github.com/5ec1cff/TrickyStore), [Tricky Store OSS](https://github.com/beakthoven/TrickyStoreOSS), [TEESimulator](https://github.com/JingMatrix/TEESimulator), [TEESimulator-RS](https://github.com/Enginex0/TEESimulator-RS) or [Oh My Keymint](https://github.com/qwq233/OhMyKeymint) release.
 
-- Note: Using Tricky Store to achieve <A13 PI STRONG integrity (with an unrevoked hardware keybox.xml), requires the Advanced Settings "spoofProvider" disabled and sometimes the "\*.security_patch" entry commented out (often unless spoofing a matching OS Patch Level with system= or all= or Simple date in Tricky Store's security_patch.txt; autopif4 will do this automatically if Tricky Store's directory exists), and a fingerprint with "\*api_level" value >25 (usually 26-32). To achieve <A13 PI DEVICE integrity (with Tricky Store default AOSP software keybox.xml) requires at least "spoofProps" enabled, and some fingerprints may also require "spoofProvider" enabled, and a fingerprint with "\*api_level" value <26 (usually 21-25). More known working private fingerprints can achieve <A13 PI DEVICE/STRONG integrity on more devices using these Advanced Settings in conjunction with Tricky Store than was possible with Tricky Store alone since they require fingerprint props spoofing.
+- Note: Using Tricky Store to achieve <A13 PI STRONG integrity (with an unrevoked hardware keybox.xml), requires the Advanced Settings "spoofProvider" disabled and sometimes the "ro.build.version.security_patch" entry commented out (often unless spoofing a matching OS Patch Level with system= or all= or Simple date in Tricky Store's security_patch.txt; autopif4 will do this automatically if Tricky Store's directory exists), and a fingerprint with "ro.product.first_api_level" value >25 (usually 26-32). To achieve <A13 PI DEVICE integrity (with Tricky Store default AOSP software keybox.xml) requires at least "spoofProps" enabled, and some fingerprints may also require "spoofProvider" enabled, and a fingerprint with "ro.product.first_api_level" value <26 (usually 21-25). More known working private fingerprints can achieve <A13 PI DEVICE/STRONG integrity on more devices using these Advanced Settings in conjunction with Tricky Store than was possible with Tricky Store alone since they require fingerprint props spoofing.
 
 </details>
 
@@ -190,6 +190,10 @@ An advanced feature intended for older Android <10 ROMs, mostly stock ROMs or th
 - For best results, you should still most likely enable Magisk's Enforce DenyList option if NOT also using [Shamiko](https://github.com/LSPosed/LSPosed.github.io/releases) or [Zygisk Assistant](https://github.com/snake-4/Zygisk-Assistant) or [NoHello](https://github.com/MhmRdd/NoHello) or [Treat Wheel](https://github.com/PerformanC/Treat-Wheel-Zygisk). The module will automatically add the Google Play Services DroidGuard process (com.google.android.gms.unstable) to the Magisk DenyList, if missing, since for Scripts-only mode it's necessary on some configurations (generally Android 9).
 
 </details>
+
+## About skipping device matching from the Action button
+
+An advanced feature intended for those running a Pixel device that is supported by Google for Pixel Beta program builds but don't want to use the matching Pixel Canary fingerprint for their device when generating one with the Action button. To use a random Pixel Canary fingerprint instead, manually opt-in by creating a file named skipmatchdevice in the module directory after installation, either from a root prompt with `touch /data/adb/modules/playintegrityfix/skipmatchdevice` or from a file explorer app, then reboot.
 
 ## About skipping property deletion
 

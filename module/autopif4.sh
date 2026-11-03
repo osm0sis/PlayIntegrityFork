@@ -261,7 +261,7 @@ if [ "$DIR" = /data/adb/modules/playintegrityfix/autopif4 ]; then
   cp -fv $NEWNAME ..;
   TS_DIR=/data/adb/tricky_store;
   if [ -d /data/adb/teesim -o -d /data/adb/omk ]; then
-    warn "TEESimulator v4.x/Oh My KeyMint must be configured manually, ensure patch levels match *.security_patch";
+    warn "TEESimulator v4.x/Oh My KeyMint must be configured manually, ensure patch levels match ro.build.version.security_patch value";
   elif [ -d "$TS_DIR" ]; then
     TS_SECPAT=$TS_DIR/security_patch.txt;
     touch $TS_SECPAT;
