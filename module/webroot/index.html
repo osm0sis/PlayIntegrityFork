@@ -11,11 +11,13 @@
     --text:#eaeaef; --muted:#9a9aa6; --accent:#4d9fff; --accent-soft:#7cc4ff;
     --ok:#39d98a; --warn:#ffcc66; --err:#ff6b6b; --r:16px;
   }
+
   /* system light, unless the user forced dark */
   @media (prefers-color-scheme:light){
     :root:not([data-theme="dark"]){ --bg:#f5f5f8; --surface:#fff; --surface2:#eeeef2; --line:#e3e3ea;
       --text:#16161a; --muted:#65656f; --accent:#0a6cff; --accent-soft:#0a6cff; }
   }
+
   /* manual override */
   :root[data-theme="light"]{ --bg:#f5f5f8; --surface:#fff; --surface2:#eeeef2; --line:#e3e3ea;
     --text:#16161a; --muted:#65656f; --accent:#0a6cff; --accent-soft:#0a6cff; }
@@ -42,10 +44,11 @@
   .stat-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
   .stat-top .lbl{font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
   .badge{font-size:.72rem;font-weight:600;padding:3px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
-  .badge.dev{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,transparent)}
-  .badge.pix{color:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 40%,transparent)}
+  .badge.custom{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,transparent)}
+  .badge.canary{color:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 40%,transparent)}
   .fp{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;word-break:break-all;color:var(--text)}
   .meta{margin-top:8px;font-size:.76rem;color:var(--muted)}
+  .dates{margin-top:8px;font-size:.76rem;color:var(--muted)}
 
   /* segmented source switch */
   .seg{display:flex;background:var(--surface2);border-radius:12px;padding:4px;gap:4px}
@@ -88,12 +91,13 @@
 </style>
 </head>
 <body>
+
 <div class="wrap">
   <header>
     <svg viewBox="0 0 24 24" fill="none"><path d="M12 2l8 4v6c0 4.4-3.1 8.2-8 10-4.9-1.8-8-5.6-8-10V6l8-4z" fill="var(--accent-soft)" opacity=".16"/><path d="M12 2l8 4v6c0 4.4-3.1 8.2-8 10-4.9-1.8-8-5.6-8-10V6l8-4z" stroke="var(--accent-soft)" stroke-width="1.5"/><path d="M8.5 12.2l2.4 2.4 4.6-4.8" stroke="var(--accent-soft)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <div>
       <h1>Play Integrity Fork</h1>
-      <div class="sub" id="ver">device-fingerprint</div>
+      <div class="sub" id="ver"></div>
     </div>
     <div class="grow"></div>
     <button class="ic" id="theme" title="Theme">☾</button>
@@ -101,26 +105,28 @@
   </header>
 
   <div class="card">
-    <div class="stat-top"><span class="lbl">Active fingerprint</span><span class="badge" id="badge">—</span></div>
+    <div class="stat-top"><span class="lbl">Active Fingerprint</span><span class="badge" id="badge">—</span></div>
     <div class="fp" id="fp">Loading…</div>
     <div class="meta" id="meta"></div>
+    <div class="dates" id="dates"></div>
   </div>
 
   <div class="card">
+    <div class="stat-top"><span class="lbl">AutoPIF</span></div>
     <div class="seg" id="seg">
-      <button data-mode="device" id="segDevice">This device</button>
-      <button data-mode="pixel" id="segPixel">Pixel</button>
+      <button data-mode="match" id="segMatch">Auto-Match Device (Default)</button>
+      <button data-mode="random" id="segRandom">Force Random</button>
     </div>
-    <div class="hint" id="hint">This device — your own certified fingerprint, auto-tracks OTAs.</div>
+    <div class="hint" id="hint"></div>
     <div class="util">
-      <button id="reapply">Re-apply</button>
-      <button id="killGms">Kill GMS</button>
+      <button id="reapply">Reapply</button>
+      <button id="killPi">Kill PI Processes</button>
     </div>
   </div>
 
   <div class="card">
     <details id="advBox">
-      <summary>Advanced settings <span class="chev">▾</span></summary>
+      <summary>Advanced Settings<span class="chev">▾</span></summary>
       <div class="flags" id="flags"></div>
     </details>
   </div>
@@ -137,22 +143,24 @@
 const MODID="playintegrityfix";
 const MOD="/data/adb/modules/"+MODID;
 const CFG=MOD+"/custom.pif.prop";
-const MARK=MOD+"/devicefingerprint";
+const MARK=MOD+"/skipmatchdevice";
 const FLAGS=["spoofBuild","spoofProps","spoofProvider","spoofSignature","spoofVendingFinger","spoofVendingSdk","verboseLogs"];
-const LABEL={spoofBuild:"Spoof build",spoofProps:"Spoof props",spoofProvider:"Spoof provider",spoofSignature:"Spoof signature",spoofVendingFinger:"Vending finger",spoofVendingSdk:"Vending SDK",verboseLogs:"Verbose logs"};
+const LABEL={spoofBuild:"Spoof Build",spoofProps:"Spoof Props",spoofProvider:"Spoof Provider",spoofSignature:"Spoof Signature",spoofVendingFinger:"Spoof Vending FINGERPRINT",spoofVendingSdk:"Spoof Vending SDK_INT",verboseLogs:"Verbose Logs"};
 
 const $=s=>document.querySelector(s);
 const term=$("#term");
+
 function log(m,c){const s=document.createElement("span");if(c)s.className=c;s.textContent=m+"\n";term.appendChild(s);term.scrollTop=term.scrollHeight;}
 
 function exec(cmd,opts){
   return new Promise((res,rej)=>{
-    if(typeof ksu==="undefined"||!ksu.exec){rej(new Error("root bridge (ksu.exec) unavailable"));return;}
+    if(typeof ksu==="undefined"||!ksu.exec){rej(new Error("Root bridge (ksu.exec) unavailable"));return;}
     const cb="__cb_"+Date.now()+"_"+Math.floor(performance.now()*1000%1e6);
     window[cb]=(e,o,r)=>{delete window[cb];res({errno:Number(e)||0,stdout:o||"",stderr:r||""});};
     try{ksu.exec(cmd,JSON.stringify(opts||{}),cb);}catch(err){delete window[cb];rej(err);}
   });
 }
+
 function toast(m){try{if(typeof ksu!=="undefined"&&ksu.toast)ksu.toast(m);}catch(e){}}
 
 async function readConfig(){
@@ -167,26 +175,36 @@ async function readConfig(){
 const val=(m,k)=>m[k]?m[k].value:"";
 
 async function refresh(){
-  let map={},dev=false;
+  let map={},rand=false;
   try{map=await readConfig();}catch(e){log(e.message,"e");}
-  try{dev=(await exec(`[ -f ${MARK} ] && echo 1 || echo 0`)).stdout.trim()==="1";}catch(e){}
+  try{rand=(await exec(`[ -f ${MARK} ] && echo 1 || echo 0`)).stdout.trim()==="1";}catch(e){}
   const has=Object.keys(map).length>0;
-  const fp=val(map,"FINGERPRINT");const isPixel=/^google\//.test(fp);
+  const fp=val(map,"FINGERPRINT");
+  const isCanary=/^google\/.*CANARY/.test(fp);
 
   const badge=$("#badge");
-  if(!has){badge.textContent="none";badge.className="badge";}
-  else if(dev){badge.textContent="● device";badge.className="badge dev";}
-  else{badge.textContent=isPixel?"● Pixel":"● custom";badge.className="badge pix";}
+  if(!has){badge.textContent="None";badge.className="badge";}
+  else if(isCanary){badge.textContent="● Canary";badge.className="badge canary";}
+  else{badge.textContent="● Custom";badge.className="badge custom";}
 
-  $("#fp").textContent=has?fp:"No config yet — pick a source below.";
-  const patch=map["*.security_patch"]?(map["*.security_patch"].commented?"patch off":"patch "+map["*.security_patch"].value):"";
-  $("#meta").textContent=has?[val(map,"MODEL"),val(map,"*api_level")?"API "+val(map,"*api_level"):"",patch].filter(Boolean).join("  ·  "):"";
+  $("#fp").textContent=has?fp:"No fingerprint — choose an option below.";
+  const name=map["MANUFACTURER"].value+" "+map["MODEL"].value;
+  const apiTarget=map["*api_level"]||map["ro.product.first_api_level"];
+  const api=apiTarget?"First API "+apiTarget.value:"";
+  const patchTarget=map["*.security_patch"]||map["ro.build.version.security_patch"];
+  const patch=patchTarget?(patchTarget.commented?"Patch OFF":"Patch "+patchTarget.value):"";
+  const releaseTest=await exec(`grep -oE 'Released:.*' ${CFG} | tr -d ':'`);
+  const release=releaseTest.stdout.trim()?releaseTest.stdout.trim():"";
+  const expiryTest=await exec(`grep -oE 'Estimated Expiry:.*' ${CFG} | tr -d ':'`);
+  const expiry=expiryTest.stdout.trim()?expiryTest.stdout.trim():"";
+  $("#meta").textContent=has?[name,api,patch].filter(Boolean).join("  ·  "):"";
+  $("#dates").textContent=has?[release,expiry].filter(Boolean).join("  ·  "):"";
 
-  $("#segDevice").classList.toggle("on",dev);
-  $("#segPixel").classList.toggle("on",!dev&&has);
-  $("#hint").textContent=dev
-    ?"This device — your own certified fingerprint, auto-tracks OTAs."
-    :"Pixel — a fetched Canary fingerprint (expires ~6 weeks).";
+  $("#segMatch").classList.toggle("on",!rand&&has);
+  $("#segRandom").classList.toggle("on",rand);
+  $("#hint").textContent=rand
+    ?"Force a random Pixel Canary print regardless of device."
+    :"Match Pixel Canary print on Beta/Canary Program supported Pixel devices, falling back to a random Pixel Canary print.";
 
   const fl=$("#flags");fl.innerHTML="";
   FLAGS.forEach(k=>{
@@ -217,16 +235,17 @@ async function run(args,label){
 async function setSource(mode){
   busy(true);
   try{
-    if(mode==="device"){await exec(`touch ${MARK}`);toast("Device fingerprint");await run("--device","device fingerprint applied");}
-    else{await exec(`rm -f ${MARK}`);toast("Pixel fingerprint");await run("-m","Pixel applied");}
+    toast("Generating Canary fingerprint…");
+    if(mode==="random"){await exec(`touch ${MARK}`);await run("","Canary fingerprint applied");}
+    else{await exec(`rm -f ${MARK}`);await run("-m","Canary fingerprint applied");}
   }catch(e){log(e.message,"e");}
   await refresh();busy(false);
 }
 
-$("#segDevice").onclick=()=>setSource("device");
-$("#segPixel").onclick=()=>setSource("pixel");
-$("#reapply").onclick=async()=>{const dev=$("#segDevice").classList.contains("on");await setSource(dev?"device":"pixel");};
-$("#killGms").onclick=async()=>{busy(true);$("#outBox").open=true;log("\n$ killpi","g");try{const r=await exec(`sh ${MOD}/killpi.sh 2>&1`);(r.stdout||"").split("\n").forEach(l=>l.trim()&&log(l,"m"));log("✓ GMS killed","g");}catch(e){log(e.message,"e");}busy(false);};
+$("#segMatch").onclick=()=>setSource("match");
+$("#segRandom").onclick=()=>setSource("random");
+$("#reapply").onclick=async()=>{const rand=$("#segRandom").classList.contains("on");await setSource(rand?"random":"match");};
+$("#killPi").onclick=async()=>{busy(true);$("#outBox").open=true;log("\n$ killpi","g");try{const r=await exec(`sh ${MOD}/killpi.sh 2>&1`);(r.stdout||"").split("\n").forEach(l=>l.trim()&&log(l,"m"));log("✓ PI processes killed","g");}catch(e){log(e.message,"e");}busy(false);};
 $("#refresh").onclick=refresh;
 
 // theme: system by default, manual override persisted
@@ -244,7 +263,7 @@ try{applyTheme(localStorage.getItem("pif-theme"));}catch(e){applyTheme(null);}
 $("#theme").onclick=()=>{const n=curTheme()==="light"?"dark":"light";try{localStorage.setItem("pif-theme",n);}catch(e){}applyTheme(n);};
 
 (async()=>{
-  try{const v=await exec(`grep '^version=' ${MOD}/module.prop | cut -d= -f2`);if(v.stdout.trim())$("#ver").textContent=v.stdout.trim()+" · device-fingerprint";}catch(e){}
+  try{const v=await exec(`grep '^version=' ${MOD}/module.prop | cut -d= -f2`);if(v.stdout.trim())$("#ver").textContent=v.stdout.trim()+" · Settings";}catch(e){}
   await refresh();
 })();
 </script>
