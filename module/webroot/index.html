@@ -125,9 +125,50 @@
   </div>
 
   <div class="card">
+    <div class="stat-top"><span class="lbl">Custom Print Override</span></div>
+
+    <!-- Native File Picker for Storage -->
+    <div class="hint" style="margin: 0 0 10px 0;">Select a local .prop file via Android File Picker:</div>
+    <input type="file" id="filePicker" style="display:none;" onchange="handleFileSelect(event)">
+    <button onclick="document.getElementById('filePicker').click()" style="width:100%; background:var(--surface2); border:1px solid var(--line); color:var(--text); padding:10px; border-radius:11px; font-size:.85rem; font-weight:600; cursor:pointer; margin-bottom:15px;">
+      📂 Browse Local Storage...
+    </button>
+
+    <!-- URL Input for Remote Prints -->
+    <div class="hint" style="margin: 0 0 10px 0;">Or download directly from a URL:</div>
+    <input type="text" id="customPrintInput" placeholder="https://..." style="width:100%; background:var(--surface2); border:1px solid var(--line); color:var(--text); padding:10px; border-radius:11px; font-family:monospace; font-size:.8rem; margin-bottom:10px;">
+
+    <div class="util" style="margin-top: 0;">
+      <button onclick="submitCustomUrl()">Apply Print from URL</button>
+    </div>
+  </div>
+
+  <div class="card">
     <details id="advBox">
       <summary>Advanced Settings<span class="chev">▾</span></summary>
       <div class="flags" id="flags"></div>
+
+      <!-- Manual Marker File Toggles -->
+      <label class="flag" style="border-top: 1px solid var(--line); cursor: pointer;">
+        <span>Skip Property Deletion (skipdelprop)</span>
+        <span class="sw"><input type="checkbox" id="skipDelProp"><i></i></span>
+      </label>
+      <label class="flag" style="border-top: 1px solid var(--line); cursor: pointer;">
+        <span>Skip Persist Prop Changes (skippersistprop)</span>
+        <span class="sw"><input type="checkbox" id="skipPersistProp"><i></i></span>
+      </label>
+
+      <!-- Verbose Logs Dropdown -->
+      <div class="flag" style="border-top: 1px solid var(--line);">
+        <span>Verbose Logs Level</span>
+        <select id="verboseSelect" style="background:var(--surface2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:6px 10px; font-weight:600; cursor:pointer; outline:none;">
+          <option value="0">0 (Off)</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="100">100 (Max)</option>
+        </select>
+      </div>
     </details>
   </div>
 
@@ -144,7 +185,9 @@ const MODID="playintegrityfix";
 const MOD="/data/adb/modules/"+MODID;
 const CFG=MOD+"/custom.pif.prop";
 const MARK=MOD+"/skipmatchdevice";
-const FLAGS=["spoofBuild","spoofProps","spoofProvider","spoofSignature","spoofVendingFinger","spoofVendingSdk","verboseLogs"];
+const MARK_DELPROP=MOD+"/skipdelprop";
+const MARK_PERSISTPROP=MOD+"/skippersistprop";
+const FLAGS=["spoofBuild","spoofProps","spoofProvider","spoofSignature","spoofVendingFinger","spoofVendingSdk"];
 const LABEL={spoofBuild:"Spoof Build",spoofProps:"Spoof Props",spoofProvider:"Spoof Provider",spoofSignature:"Spoof Signature",spoofVendingFinger:"Spoof Vending FINGERPRINT",spoofVendingSdk:"Spoof Vending SDK_INT",verboseLogs:"Verbose Logs"};
 
 const $=s=>document.querySelector(s);
@@ -178,6 +221,17 @@ async function refresh(){
   let map={},rand=false;
   try{map=await readConfig();}catch(e){log(e.message,"e");}
   try{rand=(await exec(`[ -f ${MARK} ] && echo 1 || echo 0`)).stdout.trim()==="1";}catch(e){}
+
+  // Check skip marker files
+  let skipDel = false, skipPersist = false;
+  try { skipDel = (await exec(`[ -f ${MARK_DELPROP} ] && echo 1 || echo 0`)).stdout.trim()==="1"; } catch(e){}
+  try { skipPersist = (await exec(`[ -f ${MARK_PERSISTPROP} ] && echo 1 || echo 0`)).stdout.trim()==="1"; } catch(e){}
+  $("#skipDelProp").checked = skipDel;
+  $("#skipPersistProp").checked = skipPersist;
+
+  const vLogs = map["verboseLogs"] ? map["verboseLogs"].value : "0";
+  $("#verboseSelect").value = vLogs;
+
   const has=Object.keys(map).length>0;
   const fp=val(map,"FINGERPRINT");
   const isCanary=/^google\/.*CANARY/.test(fp);
@@ -206,9 +260,10 @@ async function refresh(){
     ?"Force a random Pixel Canary print regardless of device."
     :"Match Pixel Canary print on Beta/Canary Program supported Pixel devices, falling back to a random Pixel Canary print.";
 
+  const DEFAULTS={spoofBuild:"1",spoofProps:"1",spoofProvider:"1",spoofSignature:"0",spoofVendingFinger:"0",spoofVendingSdk:"0"};
   const fl=$("#flags");fl.innerHTML="";
   FLAGS.forEach(k=>{
-    const on=map[k]&&map[k].value==="1";
+    const on=(map[k]&&!map[k].commented ? map[k].value : DEFAULTS[k])==="1";
     const el=document.createElement("label");el.className="flag";
     el.innerHTML=`<span>${LABEL[k]}</span><span class="sw"><input type="checkbox" ${on?"checked":""}><i></i></span>`;
     el.querySelector("input").addEventListener("change",e=>setFlag(k,e.target.checked?"1":"0"));
@@ -217,7 +272,13 @@ async function refresh(){
 }
 
 async function setFlag(k,v){
-  try{await exec(`sed -i 's;^\\(${k}=\\).*;\\1${v};' ${CFG}`);toast(`${LABEL[k]} ${v==="1"?"on":"off"}`);log(`set ${k}=${v}`,"m");}
+  try{
+    // Ensure key exists via migrate.sh if missing, then update/uncomment it
+    await exec(`grep -qE "^[#[:space:]]*${k}=" ${CFG} 2>/dev/null || sh ${MOD}/migrate.sh -f -a ${CFG}; sed -i "s;^[#[:space:]]*\\(${k}=\\).*;\\1${v};" ${CFG}`);
+    const status = (k === "verboseLogs") ? v : (v === "1" ? "on" : "off");
+    toast(`${LABEL[k] || k} ${status}`);
+    log(`set ${k}=${v}`,"m");
+  }
   catch(e){log(e.message,"e");}
 }
 
@@ -227,7 +288,7 @@ async function run(args,label){
   $("#outBox").open=true;log("\n$ autopif4 "+args,"g");
   try{
     const r=await exec(`sh ${MOD}/autopif4.sh ${args} 2>&1`);
-    (r.stdout||"").split("\n").forEach(l=>l.trim()&&log(l,/error|fail/i.test(l)?"e":(/warn/i.test(l)?"w":null)));
+    (r.stdout||"").replace(/\n$/,"").split("\n").forEach(l=>log(l,/error|fail/i.test(l)?"e":(/warn/i.test(l)?"w":null)));
     log(r.errno===0?"✓ "+label:"✗ exit "+r.errno,r.errno===0?"g":"e");
   }catch(e){log(e.message,"e");}
 }
@@ -242,11 +303,109 @@ async function setSource(mode){
   await refresh();busy(false);
 }
 
+// 1. Handle Native File Picker
+async function handleFileSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  busy(true);
+  $("#outBox").open = true;
+  log(`\n$ Reading local file: ${file.name}`, "g");
+
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    try {
+      const text = e.target.result;
+      // Base64 encode to safely pass file contents through the root shell
+      const b64 = btoa(unescape(encodeURIComponent(text)));
+
+      await exec(`echo "${b64}" | base64 -d > ${CFG}`);
+      log(`✓ Copied ${file.name} to ${CFG}`, "g");
+
+      // Ensure Advanced Settings entries exist in imported prop
+      log("$ migrate.sh -f -a", "m");
+      await exec(`sh ${MOD}/migrate.sh -f -a ${CFG}`);
+
+      // Restart PI processes to apply the print (bypassing autopif4)
+      log("$ killpi.sh", "m");
+      await exec(`sh ${MOD}/killpi.sh`);
+
+      toast("Local print applied");
+    } catch (err) {
+      log(err.message, "e");
+    }
+    await refresh();
+    busy(false);
+    event.target.value = ""; // Reset picker
+  };
+  reader.readAsText(file);
+}
+
+// 2. Handle URL Downloads via Native Fetch
+async function submitCustomUrl() {
+  let url = $("#customPrintInput").value.trim();
+  if (!url || !url.startsWith("http")) {
+    toast("Please enter a valid http/https URL.");
+    return;
+  }
+
+  // Auto-convert standard GitHub blob links to raw.githubusercontent links
+  if (url.includes("github.com") && url.includes("/blob/")) {
+    url = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/");
+  }
+
+  busy(true);
+  $("#outBox").open = true;
+  log(`\n$ Fetching print from URL...`, "g");
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const text = await response.text();
+    // Base64 encode to safely pass file contents through the root shell
+    const b64 = btoa(unescape(encodeURIComponent(text)));
+
+    await exec(`echo "${b64}" | base64 -d > ${CFG}`);
+    log("✓ Download successful", "g");
+
+    // Ensure Advanced Settings entries exist in downloaded prop
+    log("$ migrate.sh -f -a", "m");
+    await exec(`sh ${MOD}/migrate.sh -f -a ${CFG}`);
+
+    // Restart PI processes to apply the print
+    log("$ killpi.sh", "m");
+    await exec(`sh ${MOD}/killpi.sh`);
+
+    toast("URL print applied");
+  } catch (err) {
+    log(`✗ Download failed: ${err.message}`, "e");
+  }
+
+  await refresh();
+  busy(false);
+}
+
 $("#segMatch").onclick=()=>setSource("match");
 $("#segRandom").onclick=()=>setSource("random");
 $("#reapply").onclick=async()=>{const rand=$("#segRandom").classList.contains("on");await setSource(rand?"random":"match");};
-$("#killPi").onclick=async()=>{busy(true);$("#outBox").open=true;log("\n$ killpi","g");try{const r=await exec(`sh ${MOD}/killpi.sh 2>&1`);(r.stdout||"").split("\n").forEach(l=>l.trim()&&log(l,"m"));log("✓ PI processes killed","g");}catch(e){log(e.message,"e");}busy(false);};
+$("#killPi").onclick=async()=>{busy(true);$("#outBox").open=true;log("\n$ killpi","g");try{const r=await exec(`sh ${MOD}/killpi.sh 2>&1`);(r.stdout||"").replace(/\n$/,"").split("\n").forEach(l=>log(l,"m"));log("✓ PI processes killed","g");}catch(e){log(e.message,"e");}busy(false);};
 $("#refresh").onclick=refresh;
+$("#verboseSelect").onchange = (e) => setFlag("verboseLogs", e.target.value);
+
+$("#skipDelProp").onchange = async (e) => {
+  const on = e.target.checked;
+  await exec(on ? `touch ${MARK_DELPROP}` : `rm -f ${MARK_DELPROP}`);
+  log(on ? "$ touch skipdelprop" : "$ rm skipdelprop", "m");
+  toast("Reboot required to apply");
+};
+
+$("#skipPersistProp").onchange = async (e) => {
+  const on = e.target.checked;
+  await exec(on ? `touch ${MARK_PERSISTPROP}` : `rm -f ${MARK_PERSISTPROP}`);
+  log(on ? "$ touch skippersistprop" : "$ rm skippersistprop", "m");
+  toast("Reboot required to apply");
+};
 
 // theme: system by default, manual override persisted
 function curTheme(){
