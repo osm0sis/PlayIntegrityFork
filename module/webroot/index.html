@@ -125,22 +125,17 @@
   </div>
 
   <div class="card">
-    <div class="stat-top"><span class="lbl">Custom Print Override</span></div>
-
-    <!-- Native File Picker for Storage -->
-    <div class="hint" style="margin: 0 0 10px 0;">Select a local .prop file via Android File Picker:</div>
-    <input type="file" id="filePicker" style="display:none;" onchange="handleFileSelect(event)">
-    <button onclick="document.getElementById('filePicker').click()" style="width:100%; background:var(--surface2); border:1px solid var(--line); color:var(--text); padding:10px; border-radius:11px; font-size:.85rem; font-weight:600; cursor:pointer; margin-bottom:15px;">
-      📂 Browse Local Storage...
-    </button>
-
-    <!-- URL Input for Remote Prints -->
-    <div class="hint" style="margin: 0 0 10px 0;">Or download directly from a URL:</div>
-    <input type="text" id="customPrintInput" placeholder="https://..." style="width:100%; background:var(--surface2); border:1px solid var(--line); color:var(--text); padding:10px; border-radius:11px; font-family:monospace; font-size:.8rem; margin-bottom:10px;">
-
-    <div class="util" style="margin-top: 0;">
-      <button onclick="submitCustomUrl()">Apply Print from URL</button>
-    </div>
+    <details id="impBox">
+      <summary>Import Custom Print<span class="chev">▾</span></summary>
+      <div class="hint" style="margin: 10px 0 10px 0;">Select a local .prop file via Android File Picker:</div>
+      <input type="file" id="filePicker" style="display:none;" onchange="handleFileSelect(event)">
+      <button onclick="document.getElementById('filePicker').click()" style="width:100%; background:var(--surface2); border:1px solid var(--line); color:var(--text); padding:10px; border-radius:11px; font-size:.85rem; font-weight:600; cursor:pointer; margin-bottom:15px;">Browse Local Storage...</button>
+      <div class="hint" style="margin: 0 0 10px 0;">Or download a .prop file via URL:</div>
+      <input type="text" id="customPrintInput" placeholder="https://..." style="width:100%; background:var(--surface2); border:1px solid var(--line); color:var(--text); padding:10px; border-radius:11px; font-family:monospace; font-size:.8rem; margin-bottom:10px;">
+      <div class="util" style="margin-top: 0;">
+        <button onclick="submitCustomUrl()">Apply From URL</button>
+      </div>
+    </details>
   </div>
 
   <div class="card">
@@ -148,17 +143,15 @@
       <summary>Advanced Settings<span class="chev">▾</span></summary>
       <div class="flags" id="flags"></div>
 
-      <!-- Manual Marker File Toggles -->
       <label class="flag" style="border-top: 1px solid var(--line); cursor: pointer;">
-        <span>Skip Property Deletion (skipdelprop)</span>
+        <span>Skip Property Deletion</span>
         <span class="sw"><input type="checkbox" id="skipDelProp"><i></i></span>
       </label>
       <label class="flag" style="border-top: 1px solid var(--line); cursor: pointer;">
-        <span>Skip Persist Prop Changes (skippersistprop)</span>
+        <span>Skip Persist Property Changes</span>
         <span class="sw"><input type="checkbox" id="skipPersistProp"><i></i></span>
       </label>
 
-      <!-- Verbose Logs Dropdown -->
       <div class="flag" style="border-top: 1px solid var(--line);">
         <span>Verbose Logs Level</span>
         <select id="verboseSelect" style="background:var(--surface2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:6px 10px; font-weight:600; cursor:pointer; outline:none;">
@@ -174,7 +167,7 @@
 
   <div class="card">
     <details id="outBox">
-      <summary>Output <span class="chev">▾</span></summary>
+      <summary>Output<span class="chev">▾</span></summary>
       <div id="term"><span class="m">Ready.</span></div>
     </details>
   </div>
@@ -222,7 +215,6 @@ async function refresh(){
   try{map=await readConfig();}catch(e){log(e.message,"e");}
   try{rand=(await exec(`[ -f ${MARK} ] && echo 1 || echo 0`)).stdout.trim()==="1";}catch(e){}
 
-  // Check skip marker files
   let skipDel = false, skipPersist = false;
   try { skipDel = (await exec(`[ -f ${MARK_DELPROP} ] && echo 1 || echo 0`)).stdout.trim()==="1"; } catch(e){}
   try { skipPersist = (await exec(`[ -f ${MARK_PERSISTPROP} ] && echo 1 || echo 0`)).stdout.trim()==="1"; } catch(e){}
@@ -303,7 +295,6 @@ async function setSource(mode){
   await refresh();busy(false);
 }
 
-// 1. Handle Native File Picker
 async function handleFileSelect(event) {
   const file = event.target.files[0];
   if (!file) return;
@@ -341,7 +332,6 @@ async function handleFileSelect(event) {
   reader.readAsText(file);
 }
 
-// 2. Handle URL Downloads via Native Fetch
 async function submitCustomUrl() {
   let url = $("#customPrintInput").value.trim();
   if (!url || !url.startsWith("http")) {
