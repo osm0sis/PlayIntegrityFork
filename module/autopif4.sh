@@ -208,7 +208,7 @@ if [ -f "$MIGRATE" ]; then
     [ -f "$OLDPIF" ] && break;
   done;
   if [ -f "$OLDPIF" ]; then
-    grep -qE '//"*.security_patch"|#*.security_patch' $OLDPIF && PATCH_COMMENT=1;
+    grep -qE '//".*security_patch"|#.*security_patch' $OLDPIF && PATCH_COMMENT=1;
     grep -qE "verboseLogs|VERBOSE_LOGS" $OLDPIF && ARGS="-a";
   else
     FORCE_STRONG=1;

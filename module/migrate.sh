@@ -161,7 +161,7 @@ keep_advanced() {
     for SETTING in $ADVSETTINGS; do
       eval grep_check_config $SETTING \"$1\" \&\& $SETTING=\"$(grep_get_config $SETTING "$1")\";
     done;
-    if grep -qE '//"*.security_patch"|#*.security_patch' "$1"; then
+    if grep -qE '//".*security_patch"|#.*security_patch' "$1"; then
       case $FORMAT in
         json) SECURITY_COMMENT='//';;
         prop) SECURITY_COMMENT='#';;
