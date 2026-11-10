@@ -266,7 +266,7 @@ async function refresh(){
 async function setFlag(k,v){
   try{
     // Ensure key exists via migrate.sh if missing, then update/uncomment it
-    await exec(`grep -qE "^[#[:space:]]*${k}=" ${CFG} 2>/dev/null || sh ${MOD}/migrate.sh -f -a ${CFG}; sed -i "s;^[#[:space:]]*\\(${k}=\\).*;\\1${v};" ${CFG}`);
+    await exec(`grep -qE "^[#[:space:]]*${k}=" ${CFG} 2>/dev/null || sh ${MOD}/migrate.sh ${CFG}; sed -i "s;^[#[:space:]]*\\(${k}=\\).*;\\1${v};" ${CFG}`);
     const status = (k === "verboseLogs") ? v : (v === "1" ? "on" : "off");
     toast(`${LABEL[k] || k} ${status}`);
     log(`set ${k}=${v}`,"m");
@@ -314,8 +314,8 @@ async function handleFileSelect(event) {
       log(`✓ Copied ${file.name} to ${CFG}`, "g");
 
       // Ensure Advanced Settings entries exist in imported prop
-      log("$ migrate.sh -f -a", "m");
-      await exec(`sh ${MOD}/migrate.sh -f -a ${CFG}`);
+      log("$ migrate.sh", "m");
+      await exec(`sh ${MOD}/migrate.sh ${CFG}`);
 
       // Restart PI processes to apply the print (bypassing autopif4)
       log("$ killpi.sh", "m");
@@ -360,8 +360,8 @@ async function submitCustomUrl() {
     log("✓ Download successful", "g");
 
     // Ensure Advanced Settings entries exist in downloaded prop
-    log("$ migrate.sh -f -a", "m");
-    await exec(`sh ${MOD}/migrate.sh -f -a ${CFG}`);
+    log("$ migrate.sh", "m");
+    await exec(`sh ${MOD}/migrate.sh ${CFG}`);
 
     // Restart PI processes to apply the print
     log("$ killpi.sh", "m");
