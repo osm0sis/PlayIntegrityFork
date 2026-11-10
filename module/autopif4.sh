@@ -9,8 +9,8 @@ esac;
 
 until [ -z "$1" ]; do
   case "$1" in
-    -h|--help|help) echo "sh autopif4.sh [-a|-s] [-m]"; exit 0;;
-    -a|--advanced|advanced) ARGS="-a"; shift;;
+    -h|--help|help) echo "sh autopif4.sh [-s] [-m]"; exit 0;;
+    -a|--advanced|advanced) shift;;
     -s|--strong|strong) FORCE_STRONG=1; shift;;
     -m|--match|match) FORCE_MATCH=1; shift;;
     *) break;;
@@ -209,37 +209,34 @@ if [ -f "$MIGRATE" ]; then
   done;
   if [ -f "$OLDPIF" ]; then
     grep -qE '//".*security_patch"|#.*security_patch' $OLDPIF && PATCH_COMMENT=1;
-    grep -qE "verboseLogs|VERBOSE_LOGS" $OLDPIF && ARGS="-a";
   else
     FORCE_STRONG=1;
   fi;
   if [ "$FORCE_STRONG" ]; then
     item "Forcing configuration for <A13 PI Strong ...";
-    ARGS="-a"; PATCH_COMMENT=1; spoofProvider=0;
+    PATCH_COMMENT=1; spoofProvider=0;
   else
     item "Retaining existing configuration ...";
   fi;
   [ -d /data/adb/tricky_store -o -d /data/adb/teesim -o -d /data/adb/omk ] && unset PATCH_COMMENT;
   item "Converting pif.prop to custom.pif.prop with migrate.sh:";
   rm -f pif.json custom.pif.json custom.pif.prop;
-  sh $MIGRATE -i $ARGS pif.prop;
-  if [ -n "$ARGS" ]; then
-    grep_config() {
-      if [ -f "$2" ]; then
-        case $2 in
-          *.json) grep -m1 "$1" $2 | cut -d\" -f4;;
-          *.prop) grep -m1 "$1=" "$2" | cut -d= -f2 | cut -d\# -f1 | sed 's/[[:space:]]*$//';;
-        esac;
-      fi;
-    }
-    verboseLogs=$(grep_config "VERBOSE_LOGS" $OLDPIF);
-    ADVSETTINGS="spoofBuild spoofProps spoofProvider spoofSignature spoofVendingFinger spoofVendingSdk verboseLogs";
-    for SETTING in $ADVSETTINGS; do
-      eval [ -z \"\$$SETTING\" ] \&\& $SETTING=$(grep_config "$SETTING" $OLDPIF);
-      eval TMPVAL=\$$SETTING;
-      [ -n "$TMPVAL" ] && sed -i "s;\($SETTING=\).;\1$TMPVAL;" custom.pif.prop;
-    done;
-  fi;
+  sh $MIGRATE -i pif.prop;
+  grep_config() {
+    if [ -f "$2" ]; then
+      case $2 in
+        *.json) grep -m1 "$1" $2 | cut -d\" -f4;;
+        *.prop) grep -m1 "$1=" "$2" | cut -d= -f2 | cut -d\# -f1 | sed 's/[[:space:]]*$//';;
+      esac;
+    fi;
+  }
+  verboseLogs=$(grep_config "VERBOSE_LOGS" $OLDPIF);
+  ADVSETTINGS="spoofBuild spoofProps spoofProvider spoofSignature spoofVendingFinger spoofVendingSdk verboseLogs";
+  for SETTING in $ADVSETTINGS; do
+    eval [ -z \"\$$SETTING\" ] \&\& $SETTING=$(grep_config "$SETTING" $OLDPIF);
+    eval TMPVAL=\$$SETTING;
+    [ -n "$TMPVAL" ] && sed -i "s;\($SETTING=\).;\1$TMPVAL;" custom.pif.prop;
+  done;
   [ "$PATCH_COMMENT" ] && sed -i 's;ro.build.version.security_patch;#ro.build.version.security_patch;' custom.pif.prop;
   echo "\n# Canary Released: $CANARY_REL_DATE\n# Estimated Expiry: $CANARY_EXP_DATE" >> custom.pif.prop;
   cat custom.pif.prop;
