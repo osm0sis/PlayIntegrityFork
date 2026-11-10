@@ -4,7 +4,7 @@ N="
 ";
 
 case "$1" in
-  -h|--help|help) echo "sh migrate.sh [-f] [-o] [-a] [-p|-j] [in-file] [out-file]"; exit 0;;
+  -h|--help|help) echo "sh migrate.sh [-f] [-o] [-p|-j] [in-file] [out-file]"; exit 0;;
   -i|--install|install) INSTALL=1; shift;;
   *) echo "custom.pif.prop/.json migration script \
     $N  by osm0sis @ xda-developers $N";;
@@ -17,7 +17,7 @@ until [ -z "$1" -o -f "$1" ]; do
   case "$1" in
     -f|--force|force) FORCE=1; shift;;
     -o|--override|override) OVERRIDE=1; shift;;
-    -a|--advanced|advanced) ADVANCED=1; shift;;
+    -a|--advanced|advanced) shift;;
     -j|--json|json) FORMAT=json; FORCE=1; shift;;
     -p|--prop|prop) FORMAT=prop; FORCE=1; shift;;
     *) die "Invalid argument/file not found: $1";;
@@ -82,9 +82,15 @@ fi;
 OUT="$2";
 [ -z "$OUT" ] && OUT="$DIR/custom.pif.$FORMAT";
 
-grep_check_config api_level && [ ! "$FORCE" ] && die "No migration required";
+if grep_check_config api_level && grep_check_config verboseLogs && grep_check_config spoofVendingFinger; then
+  [ ! "$FORCE" ] && die "No migration required";
+fi;
 
-[ "$INSTALL" ] || item "Parsing fields ...";
+if [ "$INSTALL" ]; then
+  item "Running migration script on custom.pif.json:$N";
+else
+  item "Parsing fields ...";
+fi;
 
 FPFIELDS="BRAND PRODUCT DEVICE RELEASE ID INCREMENTAL TYPE TAGS";
 ALLFIELDS="MANUFACTURER MODEL FINGERPRINT $FPFIELDS SECURITY_PATCH DEVICE_INITIAL_SDK_INT";
@@ -156,7 +162,6 @@ verboseLogs=0;
 keep_advanced() {
   if grep -qE "verboseLogs|VERBOSE_LOGS" "$1"; then
     item "Retaining existing configuration ...";
-    ADVANCED=1;
     grep_check_config VERBOSE_LOGS "$1" && verboseLogs="$(grep_get_config VERBOSE_LOGS "$1")";
     for SETTING in $ADVSETTINGS; do
       eval grep_check_config $SETTING \"$1\" \&\& $SETTING=\"$(grep_get_config $SETTING "$1")\";
@@ -181,7 +186,7 @@ else
 fi;
 
 [ "$INSTALL" ] || item "Writing fields and properties to updated custom.pif.$FORMAT ...";
-[ "$ADVANCED" ] && item "Adding Advanced Settings entries ...";
+item "Adding Advanced Settings entries ...";
 
 case $FORMAT in
   json) CMNT='  //'; EVALPRE='\ \ \ \ \"'; SECPRE1='    '; SECPRE2='"'; PRE='    "'; MID='": "'; POST='",';;
@@ -200,11 +205,9 @@ echo "$PRE"'ro.product.name'"$MID$PRODUCT$POST";
 echo "$SECPRE1$SECURITY_COMMENT$SECPRE2"'ro.build.version.security_patch'"$MID$SECURITY_PATCH$POST";
 echo "$PRE"'ro.board.first_api_level'"$MID"'32'"$POST";
 echo "$PRE"'ro.product.first_api_level'"$MID$DEVICE_INITIAL_SDK_INT$POST";
-if [ "$ADVANCED" ]; then
-  echo "$N$CMNT Advanced Settings";
-  for SETTING in $ADVSETTINGS; do
-    eval echo "$EVALPRE$SETTING\$MID\$$SETTING\$POST";
-  done;
-fi) | sed '$s/,/\n}/' > "$OUT";
+echo "$N$CMNT Advanced Settings";
+for SETTING in $ADVSETTINGS; do
+  eval echo "$EVALPRE$SETTING\$MID\$$SETTING\$POST";
+done) | sed '$s/,/\n}/' > "$OUT";
 
 [ "$INSTALL" ] || cat "$OUT";
