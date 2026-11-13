@@ -47,3 +47,8 @@ resetprop_if_diff ro.boot.veritymode.managed yes
 resetprop_if_diff ro.debuggable 0
 resetprop_if_diff ro.force.debuggable 0
 resetprop_if_diff ro.secure 1
+
+# Some devices/ROMs need this added to use more Canary prints
+if ! $SKIPADDPROP; then
+    addprop_if_missing ro.board.first_api_level ""
+fi

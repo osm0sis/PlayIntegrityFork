@@ -1,3 +1,14 @@
+SKIPADDPROP=false
+[ -f "$MODPATH/skipaddprop" ] && SKIPADDPROP=true
+
+# addprop_if_missing <prop name>
+addprop_if_missing() {
+    local NAME="$1"
+    local VALUE="$2"
+
+    resetprop "$NAME" || resetprop -n "$NAME" "$VALUE"
+}
+
 SKIPDELPROP=false
 [ -f "$MODPATH/skipdelprop" ] && SKIPDELPROP=true
 

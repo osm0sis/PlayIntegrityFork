@@ -144,6 +144,10 @@
       <div class="flags" id="flags"></div>
 
       <label class="flag" style="border-top: 1px solid var(--line); cursor: pointer;">
+        <span>Skip Property Addition</span>
+        <span class="sw"><input type="checkbox" id="skipAddProp"><i></i></span>
+      </label>
+      <label class="flag" style="border-top: 1px solid var(--line); cursor: pointer;">
         <span>Skip Property Deletion</span>
         <span class="sw"><input type="checkbox" id="skipDelProp"><i></i></span>
       </label>
@@ -178,6 +182,7 @@ const MODID="playintegrityfix";
 const MOD="/data/adb/modules/"+MODID;
 const CFG=MOD+"/custom.pif.prop";
 const MARK=MOD+"/skipmatchdevice";
+const MARK_ADDPROP=MOD+"/skipaddprop";
 const MARK_DELPROP=MOD+"/skipdelprop";
 const MARK_PERSISTPROP=MOD+"/skippersistprop";
 const FLAGS=["spoofBuild","spoofProps","spoofProvider","spoofSignature","spoofVendingFinger","spoofVendingSdk"];
@@ -215,9 +220,11 @@ async function refresh(){
   try{map=await readConfig();}catch(e){log(e.message,"e");}
   try{rand=(await exec(`[ -f ${MARK} ] && echo 1 || echo 0`)).stdout.trim()==="1";}catch(e){}
 
-  let skipDel = false, skipPersist = false;
+  let skipAdd = false, skipDel = false, skipPersist = false;
+  try { skipAdd = (await exec(`[ -f ${MARK_ADDPROP} ] && echo 1 || echo 0`)).stdout.trim()==="1"; } catch(e){}
   try { skipDel = (await exec(`[ -f ${MARK_DELPROP} ] && echo 1 || echo 0`)).stdout.trim()==="1"; } catch(e){}
   try { skipPersist = (await exec(`[ -f ${MARK_PERSISTPROP} ] && echo 1 || echo 0`)).stdout.trim()==="1"; } catch(e){}
+  $("#skipAddProp").checked = skipAdd;
   $("#skipDelProp").checked = skipDel;
   $("#skipPersistProp").checked = skipPersist;
 
@@ -382,6 +389,13 @@ $("#reapply").onclick=async()=>{const rand=$("#segRandom").classList.contains("o
 $("#killPi").onclick=async()=>{busy(true);$("#outBox").open=true;log("\n$ killpi","g");try{const r=await exec(`sh ${MOD}/killpi.sh 2>&1`);(r.stdout||"").replace(/\n$/,"").split("\n").forEach(l=>log(l,"m"));log("✓ PI processes killed","g");}catch(e){log(e.message,"e");}busy(false);};
 $("#refresh").onclick=refresh;
 $("#verboseSelect").onchange = (e) => setFlag("verboseLogs", e.target.value);
+
+$("#skipAddProp").onchange = async (e) => {
+  const on = e.target.checked;
+  await exec(on ? `touch ${MARK_ADDPROP}` : `rm -f ${MARK_ADDPROP}`);
+  log(on ? "$ touch skipaddprop" : "$ rm skipaddprop", "m");
+  toast("Reboot required to apply");
+};
 
 $("#skipDelProp").onchange = async (e) => {
   const on = e.target.checked;
