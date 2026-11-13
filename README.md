@@ -193,7 +193,7 @@ An advanced feature intended for older Android <10 ROMs, mostly stock ROMs or th
 
 ## About skipping device matching from the Action button
 
-An advanced feature intended for those running a Pixel device that is supported by Google for Pixel Beta program builds but don't want to use the matching Pixel Canary fingerprint for their device when generating one with the Action button. To use a random Pixel Canary fingerprint instead, manually opt-in by creating a file named skipmatchdevice in the module directory after installation, either from a root prompt with `touch /data/adb/modules/playintegrityfix/skipmatchdevice` or from a file explorer app, then reboot.
+An advanced feature intended for those running a Pixel device that is supported by Google for Pixel Beta program builds but don't want to use the matching Pixel Canary fingerprint for their device when generating one with the Action button. To use a random Pixel Canary fingerprint instead, manually opt-in by creating a file named skipmatchdevice in the module directory after installation, either from a root prompt with `touch /data/adb/modules/playintegrityfix/skipmatchdevice` or from a file explorer app, then run Action again.
 
 ## About skipping property deletion
 
