@@ -119,7 +119,7 @@
     </div>
     <div class="hint" id="hint"></div>
     <div class="util">
-      <button id="reapply">Reapply</button>
+      <button id="generate">Generate</button>
       <button id="killPi">Kill PI Processes</button>
     </div>
   </div>
@@ -127,9 +127,15 @@
   <div class="card">
     <details id="impBox">
       <summary>Import Custom Print<span class="chev">▾</span></summary>
+      <label class="flag" style="padding: 6px 2px; margin: 10px 0 4px 0; cursor: pointer;">
+        <span>Force migration to latest format</span>
+        <span class="sw"><input type="checkbox" id="migrateForce"><i></i></span>
+      </label>
+
       <div class="hint" style="margin: 10px 0 10px 0;">Select a local .prop file via Android File Picker:</div>
       <input type="file" id="filePicker" style="display:none;" onchange="handleFileSelect(event)">
       <button onclick="document.getElementById('filePicker').click()" style="width:100%; background:var(--surface2); border:1px solid var(--line); color:var(--text); padding:10px; border-radius:11px; font-size:.85rem; font-weight:600; cursor:pointer; margin-bottom:15px;">Browse Local Storage...</button>
+
       <div class="hint" style="margin: 0 0 10px 0;">Or download a .prop file via URL:</div>
       <input type="text" id="customPrintInput" placeholder="https://..." style="width:100%; background:var(--surface2); border:1px solid var(--line); color:var(--text); padding:10px; border-radius:11px; font-family:monospace; font-size:.8rem; margin-bottom:10px;">
       <div class="util" style="margin-top: 0;">
@@ -157,7 +163,7 @@
       </label>
 
       <div class="flag" style="border-top: 1px solid var(--line);">
-        <span>Verbose Logs Level</span>
+        <span>Verbose Logs</span>
         <select id="verboseSelect" style="background:var(--surface2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:6px 10px; font-weight:600; cursor:pointer; outline:none;">
           <option value="0">0 (Off)</option>
           <option value="1">1</option>
@@ -172,7 +178,7 @@
   <div class="card">
     <details id="outBox">
       <summary>Output<span class="chev">▾</span></summary>
-      <div id="term"><span class="m">Ready.</span></div>
+      <div id="term"><span class="m">Ready.<br></span></div>
     </details>
   </div>
 </div>
@@ -181,10 +187,10 @@
 const MODID="playintegrityfix";
 const MOD="/data/adb/modules/"+MODID;
 const CFG=MOD+"/custom.pif.prop";
-const MARK=MOD+"/skipmatchdevice";
-const MARK_ADDPROP=MOD+"/skipaddprop";
-const MARK_DELPROP=MOD+"/skipdelprop";
-const MARK_PERSISTPROP=MOD+"/skippersistprop";
+const MARK_SKIPMATCH=MOD+"/skipmatchdevice";
+const MARK_SKIPADD=MOD+"/skipaddprop";
+const MARK_SKIPDEL=MOD+"/skipdelprop";
+const MARK_SKIPPERSIST=MOD+"/skippersistprop";
 const FLAGS=["spoofBuild","spoofProps","spoofProvider","spoofSignature","spoofVendingFinger","spoofVendingSdk"];
 const LABEL={spoofBuild:"Spoof Build",spoofProps:"Spoof Props",spoofProvider:"Spoof Provider",spoofSignature:"Spoof Signature",spoofVendingFinger:"Spoof Vending FINGERPRINT",spoofVendingSdk:"Spoof Vending SDK_INT",verboseLogs:"Verbose Logs"};
 
@@ -204,6 +210,8 @@ function exec(cmd,opts){
 
 function toast(m){try{if(typeof ksu!=="undefined"&&ksu.toast)ksu.toast(m);}catch(e){}}
 
+function busy(b){document.querySelectorAll("button").forEach(x=>x.disabled=b);$("#refresh").disabled=false;}
+
 async function readConfig(){
   const r=await exec(`cat ${CFG} 2>/dev/null`);const map={};
   (r.stdout||"").split("\n").forEach(l=>{
@@ -218,12 +226,12 @@ const val=(m,k)=>m[k]?m[k].value:"";
 async function refresh(){
   let map={},rand=false;
   try{map=await readConfig();}catch(e){log(e.message,"e");}
-  try{rand=(await exec(`[ -f ${MARK} ] && echo 1 || echo 0`)).stdout.trim()==="1";}catch(e){}
+  try{rand=(await exec(`[ -f ${MARK_SKIPMATCH} ] && echo 1 || echo 0`)).stdout.trim()==="1";}catch(e){}
 
   let skipAdd = false, skipDel = false, skipPersist = false;
-  try { skipAdd = (await exec(`[ -f ${MARK_ADDPROP} ] && echo 1 || echo 0`)).stdout.trim()==="1"; } catch(e){}
-  try { skipDel = (await exec(`[ -f ${MARK_DELPROP} ] && echo 1 || echo 0`)).stdout.trim()==="1"; } catch(e){}
-  try { skipPersist = (await exec(`[ -f ${MARK_PERSISTPROP} ] && echo 1 || echo 0`)).stdout.trim()==="1"; } catch(e){}
+  try { skipAdd = (await exec(`[ -f ${MARK_SKIPADD} ] && echo 1 || echo 0`)).stdout.trim()==="1"; } catch(e){}
+  try { skipDel = (await exec(`[ -f ${MARK_SKIPDEL} ] && echo 1 || echo 0`)).stdout.trim()==="1"; } catch(e){}
+  try { skipPersist = (await exec(`[ -f ${MARK_SKIPPERSIST} ] && echo 1 || echo 0`)).stdout.trim()==="1"; } catch(e){}
   $("#skipAddProp").checked = skipAdd;
   $("#skipDelProp").checked = skipDel;
   $("#skipPersistProp").checked = skipPersist;
@@ -245,7 +253,7 @@ async function refresh(){
   const apiTarget=map["*api_level"]||map["ro.product.first_api_level"];
   const api=apiTarget?"First API "+apiTarget.value:"";
   const patchTarget=map["*.security_patch"]||map["ro.build.version.security_patch"];
-  const patch=patchTarget?(patchTarget.commented?"Patch OFF":"Patch "+patchTarget.value):"";
+  const patch=patchTarget?(patchTarget.commented?"Patch Commented":"Patch "+patchTarget.value):"";
   const releaseTest=await exec(`grep -oE 'Released:.*' ${CFG} | tr -d ':'`);
   const release=releaseTest.stdout.trim()?releaseTest.stdout.trim():"";
   const expiryTest=await exec(`grep -oE 'Estimated Expiry:.*' ${CFG} | tr -d ':'`);
@@ -270,36 +278,55 @@ async function refresh(){
   });
 }
 
-async function setFlag(k,v){
-  try{
-    // Ensure key exists via migrate.sh if missing, then update/uncomment it
-    await exec(`grep -qE "^[#[:space:]]*${k}=" ${CFG} 2>/dev/null || sh ${MOD}/migrate.sh ${CFG}; sed -i "s;^[#[:space:]]*\\(${k}=\\).*;\\1${v};" ${CFG}`);
-    const status = (k === "verboseLogs") ? v : (v === "1" ? "on" : "off");
-    toast(`${LABEL[k] || k} ${status}`);
-    log(`set ${k}=${v}`,"m");
-  }
-  catch(e){log(e.message,"e");}
-}
-
-function busy(b){document.querySelectorAll("button").forEach(x=>x.disabled=b);$("#refresh").disabled=false;}
-
-async function run(args,label){
-  $("#outBox").open=true;log("\n$ autopif4 "+args,"g");
+async function autoPif(mode){
+  busy(true);
+  await refresh();
+  $("#outBox").open=true;
+  toast("Generating Canary fingerprint…");
+  const args=(mode==="random")?"":"-m";
+  log("\n# autopif4.sh "+args,"g");
   try{
     const r=await exec(`sh ${MOD}/autopif4.sh ${args} 2>&1`);
     (r.stdout||"").replace(/\n$/,"").split("\n").forEach(l=>log(l,/error|fail/i.test(l)?"e":(/warn/i.test(l)?"w":null)));
-    log(r.errno===0?"✓ "+label:"✗ exit "+r.errno,r.errno===0?"g":"e");
-  }catch(e){log(e.message,"e");}
+    log(r.errno===0?"✓ Canary fingerprint applied":"✗ exit "+r.errno,r.errno===0?"g":"e");
+  } catch(e){log(e.message,"e");}
+  await refresh();
+  busy(false);
 }
 
-async function setSource(mode){
-  busy(true);
+async function migrateCfg(args){
+  log("\n# migrate.sh "+args,"g");
   try{
-    toast("Generating Canary fingerprint…");
-    if(mode==="random"){await exec(`touch ${MARK}`);await run("","Canary fingerprint applied");}
-    else{await exec(`rm -f ${MARK}`);await run("-m","Canary fingerprint applied");}
-  }catch(e){log(e.message,"e");}
-  await refresh();busy(false);
+    const r=await exec(`sh ${MOD}/migrate.sh ${args} ${CFG} 2>&1`);
+    (r.stdout||"").replace(/\n$/,"").split("\n").filter(Boolean).forEach(l=>log(l,null));
+  } catch(e){log(e.message,"e");}
+}
+
+async function killPi(){
+  log("\n# killpi.sh","g");
+  try{
+    const r=await exec(`sh ${MOD}/killpi.sh 2>&1`);
+    (r.stdout||"").replace(/\n$/,"").split("\n").filter(Boolean).forEach(l=>log(l,null));
+  } catch(e){log(e.message,"e");}
+  log("✓ PI processes killed","g");
+}
+
+async function setMode(mode){
+  try{
+    if(mode==="random"){await exec(`touch ${MARK_SKIPMATCH}`);log("Create skipmatchdevice", "m");}
+    else{await exec(`rm -f ${MARK_SKIPMATCH}`);log("Remove skipmatchdevice", "m");}
+    await refresh();
+  } catch(e){log(e.message,"e");}
+}
+
+async function setFlag(k,v){
+  try{
+    await exec(`sed -i "s;^[#[:space:]]*\\(${k}=\\).*;\\1${v};" ${CFG}`);
+    const status = (k === "verboseLogs") ? v : (v === "1" ? "on" : "off");
+    toast(`${LABEL[k] || k} ${status}`);
+    log(`Set ${k}=${v}`,"m");
+    await killPi();
+  } catch(e){log(e.message,"e");}
 }
 
 async function handleFileSelect(event) {
@@ -307,31 +334,21 @@ async function handleFileSelect(event) {
   if (!file) return;
 
   busy(true);
+  await refresh();
   $("#outBox").open = true;
-  log(`\n$ Reading local file: ${file.name}`, "g");
-
+  toast("Reading fingerprint from file…");
   const reader = new FileReader();
   reader.onload = async function(e) {
     try {
       const text = e.target.result;
       // Base64 encode to safely pass file contents through the root shell
       const b64 = btoa(unescape(encodeURIComponent(text)));
-
       await exec(`echo "${b64}" | base64 -d > ${CFG}`);
-      log(`✓ Copied ${file.name} to ${CFG}`, "g");
-
-      // Ensure Advanced Settings entries exist in imported prop
-      log("$ migrate.sh", "m");
-      await exec(`sh ${MOD}/migrate.sh ${CFG}`);
-
-      // Restart PI processes to apply the print (bypassing autopif4)
-      log("$ killpi.sh", "m");
-      await exec(`sh ${MOD}/killpi.sh`);
-
-      toast("Local print applied");
-    } catch (err) {
-      log(err.message, "e");
-    }
+      log(`Copied ${file.name} to ${CFG}`, "m");
+      await migrateCfg($("#migrateForce").checked?"-p":"");
+      await killPi();
+      log(`✓ Local fingerprint applied`, "g");
+    } catch(err){log(err.message,"e");}
     await refresh();
     busy(false);
     event.target.value = ""; // Reset picker
@@ -345,69 +362,56 @@ async function submitCustomUrl() {
     toast("Please enter a valid http/https URL.");
     return;
   }
-
   // Auto-convert standard GitHub blob links to raw.githubusercontent links
   if (url.includes("github.com") && url.includes("/blob/")) {
     url = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/");
   }
 
   busy(true);
+  await refresh();
   $("#outBox").open = true;
-  log(`\n$ Fetching print from URL...`, "g");
-
+  toast("Fetching fingerprint from URL…");
   try {
     const response = await fetch(url);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
     const text = await response.text();
     // Base64 encode to safely pass file contents through the root shell
     const b64 = btoa(unescape(encodeURIComponent(text)));
-
     await exec(`echo "${b64}" | base64 -d > ${CFG}`);
-    log("✓ Download successful", "g");
-
-    // Ensure Advanced Settings entries exist in downloaded prop
-    log("$ migrate.sh", "m");
-    await exec(`sh ${MOD}/migrate.sh ${CFG}`);
-
-    // Restart PI processes to apply the print
-    log("$ killpi.sh", "m");
-    await exec(`sh ${MOD}/killpi.sh`);
-
-    toast("URL print applied");
-  } catch (err) {
-    log(`✗ Download failed: ${err.message}`, "e");
-  }
-
+    log(`Downloaded ${url} to ${CFG}`, "m");
+    await migrateCfg($("#migrateForce").checked?"-p":"");
+    await killPi();
+    log(`✓ URL fingerprint applied`, "g");
+  } catch(err){log(`✗ Download failed: ${err.message}`, "e");}
   await refresh();
   busy(false);
 }
 
-$("#segMatch").onclick=()=>setSource("match");
-$("#segRandom").onclick=()=>setSource("random");
-$("#reapply").onclick=async()=>{const rand=$("#segRandom").classList.contains("on");await setSource(rand?"random":"match");};
-$("#killPi").onclick=async()=>{busy(true);$("#outBox").open=true;log("\n$ killpi","g");try{const r=await exec(`sh ${MOD}/killpi.sh 2>&1`);(r.stdout||"").replace(/\n$/,"").split("\n").forEach(l=>log(l,"m"));log("✓ PI processes killed","g");}catch(e){log(e.message,"e");}busy(false);};
+$("#segMatch").onclick=()=>setMode("match");
+$("#segRandom").onclick=()=>setMode("random");
+$("#generate").onclick=async()=>{const rand=$("#segRandom").classList.contains("on");await autoPif(rand?"random":"match");};
+$("#killPi").onclick=async()=>{busy(true);await refresh();$("#outBox").open=true;await killPi();busy(false);};
 $("#refresh").onclick=refresh;
 $("#verboseSelect").onchange = (e) => setFlag("verboseLogs", e.target.value);
 
 $("#skipAddProp").onchange = async (e) => {
   const on = e.target.checked;
-  await exec(on ? `touch ${MARK_ADDPROP}` : `rm -f ${MARK_ADDPROP}`);
-  log(on ? "$ touch skipaddprop" : "$ rm skipaddprop", "m");
+  await exec(on ? `touch ${MARK_SKIPADD}` : `rm -f ${MARK_SKIPADD}`);
+  log(on ? "Create skipaddprop" : "Remove skipaddprop", "m");
   toast("Reboot required to apply");
 };
 
 $("#skipDelProp").onchange = async (e) => {
   const on = e.target.checked;
-  await exec(on ? `touch ${MARK_DELPROP}` : `rm -f ${MARK_DELPROP}`);
-  log(on ? "$ touch skipdelprop" : "$ rm skipdelprop", "m");
+  await exec(on ? `touch ${MARK_SKIPDEL}` : `rm -f ${MARK_SKIPDEL}`);
+  log(on ? "Create skipdelprop" : "Remove skipdelprop", "m");
   toast("Reboot required to apply");
 };
 
 $("#skipPersistProp").onchange = async (e) => {
   const on = e.target.checked;
-  await exec(on ? `touch ${MARK_PERSISTPROP}` : `rm -f ${MARK_PERSISTPROP}`);
-  log(on ? "$ touch skippersistprop" : "$ rm skippersistprop", "m");
+  await exec(on ? `touch ${MARK_SKIPPERSIST}` : `rm -f ${MARK_SKIPPERSIST}`);
+  log(on ? "Create skippersistprop" : "Remove skippersistprop", "m");
   toast("Reboot required to apply");
 };
 
