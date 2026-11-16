@@ -63,6 +63,14 @@
   .util button:active{transform:scale(.98)}
   button:disabled{opacity:.5;pointer-events:none}
 
+  /* import */
+  #filePicker{display:none}
+  .import-flag{padding:6px 2px;margin:10px 0 4px}
+  .input-base{width:100%;background:var(--surface2);border:1px solid var(--line);color:var(--text);padding:10px;border-radius:11px}
+  .browse-btn{font-size:.85rem;font-weight:600;cursor:pointer;margin-bottom:15px}
+  .custom-input{font-family:monospace;font-size:.8rem;margin-bottom:10px}
+  .mt-0{margin-top:0}
+
   /* advanced */
   details>summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;
     font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
@@ -70,7 +78,7 @@
   details>summary .chev{transition:.2s}
   details[open]>summary .chev{transform:rotate(180deg)}
   .flags{display:flex;flex-direction:column;gap:1px;margin-top:14px}
-  .flag{display:flex;align-items:center;gap:12px;padding:11px 2px;font-size:.9rem}
+  .flag{display:flex;align-items:center;gap:12px;padding:11px 2px;font-size:.9rem;cursor:pointer}
   .flag+.flag{border-top:1px solid var(--line)}
   .flag>span:not(.sw){flex:1}
   .sw{position:relative;width:46px;height:27px;flex:0 0 auto;cursor:pointer}
@@ -79,6 +87,8 @@
   .sw i::after{content:"";position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;background:#fff;transition:.2s}
   .sw input:checked + i{background:var(--accent)}
   .sw input:checked + i::after{transform:translateX(19px)}
+  .border-top{border-top:1px solid var(--line)}
+  #verboseSelect{background:var(--surface2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-weight:600;cursor:pointer;outline:none}
 
   /* output */
   #term{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:11px;margin-top:12px;
@@ -127,18 +137,18 @@
   <div class="card">
     <details id="impBox">
       <summary>Import Custom Print<span class="chev">▾</span></summary>
-      <label class="flag" style="padding: 6px 2px; margin: 10px 0 4px 0; cursor: pointer;">
+      <label class="flag import-flag">
         <span>Force migration to latest format</span>
         <span class="sw"><input type="checkbox" id="migrateForce"><i></i></span>
       </label>
 
-      <div class="hint" style="margin: 10px 0 10px 0;">Select a local .prop file via Android File Picker:</div>
-      <input type="file" id="filePicker" style="display:none;" onchange="handleFileSelect(event)">
-      <button onclick="document.getElementById('filePicker').click()" style="width:100%; background:var(--surface2); border:1px solid var(--line); color:var(--text); padding:10px; border-radius:11px; font-size:.85rem; font-weight:600; cursor:pointer; margin-bottom:15px;">Browse Local Storage...</button>
+      <div class="hint" style="margin:10px 0">Select a local .prop file via Android File Picker:</div>
+      <input type="file" id="filePicker" onchange="handleFileSelect(event)">
+      <button onclick="document.getElementById('filePicker').click()" class="input-base browse-btn">Browse Local Storage...</button>
 
-      <div class="hint" style="margin: 0 0 10px 0;">Or download a .prop file via URL:</div>
-      <input type="text" id="customPrintInput" placeholder="https://..." style="width:100%; background:var(--surface2); border:1px solid var(--line); color:var(--text); padding:10px; border-radius:11px; font-family:monospace; font-size:.8rem; margin-bottom:10px;">
-      <div class="util" style="margin-top: 0;">
+      <div class="hint" style="margin:0 0 10px">Or download a .prop file via URL:</div>
+      <input type="text" id="customPrintInput" placeholder="https://..." class="input-base custom-input">
+      <div class="util mt-0">
         <button onclick="submitCustomUrl()">Apply From URL</button>
       </div>
     </details>
@@ -149,22 +159,22 @@
       <summary>Advanced Settings<span class="chev">▾</span></summary>
       <div class="flags" id="flags"></div>
 
-      <label class="flag" style="border-top: 1px solid var(--line); cursor: pointer;">
+      <label class="flag border-top">
         <span>Skip Property Addition</span>
         <span class="sw"><input type="checkbox" id="skipAddProp"><i></i></span>
       </label>
-      <label class="flag" style="border-top: 1px solid var(--line); cursor: pointer;">
+      <label class="flag border-top">
         <span>Skip Property Deletion</span>
         <span class="sw"><input type="checkbox" id="skipDelProp"><i></i></span>
       </label>
-      <label class="flag" style="border-top: 1px solid var(--line); cursor: pointer;">
+      <label class="flag border-top">
         <span>Skip Persist Property Changes</span>
         <span class="sw"><input type="checkbox" id="skipPersistProp"><i></i></span>
       </label>
 
-      <div class="flag" style="border-top: 1px solid var(--line);">
+      <div class="flag border-top">
         <span>Verbose Logs</span>
-        <select id="verboseSelect" style="background:var(--surface2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:6px 10px; font-weight:600; cursor:pointer; outline:none;">
+        <select id="verboseSelect">
           <option value="0">0 (Off)</option>
           <option value="1">1</option>
           <option value="2">2</option>
