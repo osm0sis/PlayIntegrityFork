@@ -50,7 +50,7 @@
   .meta{margin-top:8px;font-size:.76rem;color:var(--muted)}
   .dates{margin-top:8px;font-size:.76rem;color:var(--muted)}
 
-  /* segmented source switch */
+  /* segmented mode switch */
   .seg{display:flex;background:var(--surface2);border-radius:12px;padding:4px;gap:4px}
   .seg button{flex:1;border:none;background:none;color:var(--muted);font-size:.9rem;font-weight:600;
     padding:11px;border-radius:9px;cursor:pointer;transition:.15s}
@@ -159,7 +159,7 @@
       <summary>Advanced Settings<span class="chev">▾</span></summary>
       <div class="flags" id="flags"></div>
 
-      <label class="flag border-top">
+      <label class="flag border-top" id="skipAddPropRow">
         <span>Skip Property Addition</span>
         <span class="sw"><input type="checkbox" id="skipAddProp"><i></i></span>
       </label>
@@ -172,7 +172,7 @@
         <span class="sw"><input type="checkbox" id="skipPersistProp"><i></i></span>
       </label>
 
-      <div class="flag border-top">
+      <div class="flag border-top" id="verboseRow">
         <span>Verbose Logs</span>
         <select id="verboseSelect">
           <option value="0">0 (Off)</option>
@@ -263,7 +263,7 @@ async function refresh(){
   else{badge.textContent="● Custom";badge.className="badge custom";}
 
   $("#fp").textContent=has?fp:"No fingerprint — choose an option below.";
-  const name=map["MANUFACTURER"].value+" "+map["MODEL"].value;
+  const name=(val(map,"MANUFACTURER")+" "+val(map,"MODEL")).trim();
   const apiTarget=map["*api_level"]||map["ro.product.first_api_level"];
   const api=apiTarget?"First API "+apiTarget.value:"";
   const patchTarget=map["*.security_patch"]||map["ro.build.version.security_patch"];
@@ -275,21 +275,25 @@ async function refresh(){
   $("#meta").textContent=has?[name,api,patch].filter(Boolean).join("  ·  "):"";
   $("#dates").textContent=has?[release,expiry].filter(Boolean).join("  ·  "):"";
 
-  $("#segMatch").classList.toggle("on",!rand&&has);
+  $("#segMatch").classList.toggle("on",!rand);
   $("#segRandom").classList.toggle("on",rand);
   $("#hint").textContent=rand
     ?"Force a random Pixel Canary print regardless of device."
     :"Match Pixel Canary print on Beta/Canary Program supported Pixel devices, falling back to a random Pixel Canary print.";
 
-  const DEFAULTS={spoofBuild:"1",spoofProps:"1",spoofProvider:"1",spoofSignature:"0",spoofVendingFinger:"0",spoofVendingSdk:"0"};
-  const fl=$("#flags");fl.innerHTML="";
-  FLAGS.forEach(k=>{
-    const on=(map[k]&&!map[k].commented ? map[k].value : DEFAULTS[k])==="1";
-    const el=document.createElement("label");el.className="flag";
-    el.innerHTML=`<span>${LABEL[k]}</span><span class="sw"><input type="checkbox" ${on?"checked":""}><i></i></span>`;
-    el.querySelector("input").addEventListener("change",e=>setFlag(k,e.target.checked?"1":"0"));
-    fl.appendChild(el);
-  });
+  if(has){
+    const fl=$("#flags");fl.innerHTML="";
+    FLAGS.forEach(k=>{
+      const on=map[k]&&map[k].value==="1";
+      const el=document.createElement("label");el.className="flag";
+      el.innerHTML=`<span>${LABEL[k]}</span><span class="sw"><input type="checkbox" ${on?"checked":""}><i></i></span>`;
+      el.querySelector("input").addEventListener("change",e=>setFlag(k,e.target.checked?"1":"0"));
+      fl.appendChild(el);
+    });
+  }
+  $("#flags").style.display=has?"flex":"none";
+  $("#skipAddPropRow").style.borderTop=has?"":"none";
+  $("#verboseRow").style.display=has?"flex":"none";
 }
 
 async function autoPif(mode){
@@ -396,6 +400,7 @@ async function submitCustomUrl() {
     await migrateCfg($("#migrateForce").checked?"-p":"");
     await killPi();
     log(`✓ URL fingerprint applied`, "g");
+    $("#customPrintInput").value = "";
   } catch(err){log(`✗ Download failed: ${err.message}`, "e");}
   await refresh();
   busy(false);
