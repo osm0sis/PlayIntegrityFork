@@ -11,15 +11,15 @@ case "$1" in
 esac;
 
 item() { echo "- $@"; }
-die() { [ "$INSTALL" ] || echo "$N$N! $@"; exit 1; }
+die() { [ "$INSTALL" ] || echo "! $@"; exit 1; }
 
 until [ -z "$1" -o -f "$1" ]; do
   case "$1" in
     -f|--force|force) FORCE=1; shift;;
     -o|--override|override) OVERRIDE=1; shift;;
-    -a|--advanced|advanced) shift;;
     -j|--json|json) FORMAT=json; FORCE=1; shift;;
     -p|--prop|prop) FORMAT=prop; FORCE=1; shift;;
+    -a|--advanced|advanced) shift;; # ignore former non-breaking features
     *) die "Invalid argument/file not found: $1";;
   esac;
 done;

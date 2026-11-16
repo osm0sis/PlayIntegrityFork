@@ -10,9 +10,9 @@ esac;
 until [ -z "$1" ]; do
   case "$1" in
     -h|--help|help) echo "sh autopif4.sh [-s] [-m]"; exit 0;;
-    -a|--advanced|advanced) shift;;
     -s|--strong|strong) FORCE_STRONG=1; shift;;
     -m|--match|match) FORCE_MATCH=1; shift;;
+    -a|--advanced|advanced) shift;; # ignore former non-breaking features
     *) break;;
   esac;
 done;
