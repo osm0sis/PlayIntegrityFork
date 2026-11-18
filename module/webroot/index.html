@@ -109,6 +109,9 @@
   .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
   .modal-head .lbl{font-size:.78rem;font-weight:600;font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--text)}
   .modal-area{flex:1;min-height:120px;width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:11px;padding:10px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;line-height:1.45;resize:none;outline:none;white-space:pre;overflow:auto;overscroll-behavior:contain}
+  #confirmModal{align-items:center}
+  .confirm-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);width:100%;max-width:340px;padding:16px;touch-action:auto}
+  .confirm-msg{font-size:.92rem;color:var(--text);margin-bottom:14px}
 </style>
 </head>
 <body>
@@ -194,8 +197,9 @@
         </select>
       </div>
 
-      <div class="util mt-0">
-        <button onclick="openPropEditor()">Edit</button>
+      <div class="util">
+        <button onclick="deletePropFile()">Remove</button>
+        <button onclick="openPropEditor()">Manual Edit</button>
       </div>
       <div class="util mt-10">
         <button onclick="savePifLog()">Save PIF Logcat</button>
@@ -221,6 +225,16 @@
     <div class="util">
       <button onclick="closePropEditor()">Cancel</button>
       <button class="primary" onclick="savePropEditor()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="confirmModal">
+  <div class="confirm-card">
+    <div class="confirm-msg" id="confirmMsg">Delete custom.pif.prop?</div>
+    <div class="util mt-0">
+      <button id="confirmNo">No</button>
+      <button class="primary" id="confirmYes">Yes</button>
     </div>
   </div>
 </div>
@@ -312,7 +326,8 @@ async function refresh(){
   if(has){
     const fl=$("#flags");fl.innerHTML="";
     FLAGS.forEach(k=>{
-      const on=map[k]&&map[k].value==="1";
+      const v=map[k]?map[k].value:"";
+      const on=(k==="spoofVendingFinger"||k==="spoofVendingSdk")?(v!==""&&v!=="0"):(v==="1");
       const el=document.createElement("label");el.className="flag";
       el.innerHTML=`<span>${LABEL[k]}</span><span class="sw"><input type="checkbox" ${on?"checked":""}><i></i></span>`;
       el.querySelector("input").addEventListener("change",e=>setFlag(k,e.target.checked?"1":"0"));
@@ -430,6 +445,42 @@ async function submitCustomUrl() {
     log(`✓ URL fingerprint applied`, "g");
     $("#customPrintInput").value = "";
   } catch(err){log(`✗ Download failed: ${err.message}`, "e");}
+  await refresh();
+  busy(false);
+}
+
+function showConfirm(msg) {
+  return new Promise(resolve => {
+    const modal = $("#confirmModal");
+    $("#confirmMsg").textContent = msg;
+    modal.classList.add("open");
+    document.body.style.overflow = "hidden";
+    const done = (ok) => {
+      modal.classList.remove("open");
+      document.body.style.overflow = "";
+      $("#confirmYes").onclick = null;
+      $("#confirmNo").onclick = null;
+      resolve(ok);
+    };
+    $("#confirmYes").onclick = () => done(true);
+    $("#confirmNo").onclick = () => done(false);
+  });
+}
+
+async function deletePropFile() {
+  if (!(await showConfirm("Delete custom.pif.prop?"))) return;
+  busy(true);
+  $("#outBox").open = true;
+  try {
+    await exec(`rm -f ${CFG}`);
+    log(`Removed ${CFG}`, "m");
+    await killPi();
+    toast("Deleted custom.pif.prop");
+    log(`✓ custom.pif.prop deleted`, "g");
+  } catch(e) {
+    log(e.message, "e");
+    toast("Delete failed");
+  }
   await refresh();
   busy(false);
 }
