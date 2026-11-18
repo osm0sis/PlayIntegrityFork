@@ -61,6 +61,7 @@
   .util button{flex:1;background:var(--surface2);border:1px solid var(--line);color:var(--text);
     font-size:.84rem;font-weight:600;padding:10px;border-radius:11px;cursor:pointer}
   .util button:active{transform:scale(.98)}
+  .util button.primary{background:var(--accent);color:#03121f;border-color:var(--accent)}
   button:disabled{opacity:.5;pointer-events:none}
 
   /* import */
@@ -70,6 +71,7 @@
   .browse-btn{font-size:.85rem;font-weight:600;cursor:pointer;margin-bottom:15px}
   .custom-input{font-family:monospace;font-size:.8rem;margin-bottom:10px}
   .mt-0{margin-top:0}
+  .mt-10{margin-top:10px}
 
   /* advanced */
   details>summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;
@@ -98,6 +100,18 @@
   .spin{display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-right-color:transparent;
     border-radius:50%;animation:sp .7s linear infinite;vertical-align:-1px;margin-left:6px}
   @keyframes sp{to{transform:rotate(360deg)}}
+
+  /* modal editor */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:flex-start;justify-content:center;padding:max(env(safe-area-inset-top),14px) 16px 16px;z-index:100;overscroll-behavior:contain;touch-action:none}
+  .modal-backdrop.open{display:flex}
+  .modal-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);width:100%;max-width:600px;height:88vh;max-height:88vh;display:flex;flex-direction:column;padding:14px;touch-action:auto;transition:height .15s ease,max-height .15s ease}
+  .modal-backdrop.kbd .modal-card{height:48vh;max-height:48vh}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .modal-head .lbl{font-size:.78rem;font-weight:600;font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--text)}
+  .modal-area{flex:1;min-height:120px;width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:11px;padding:10px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;line-height:1.45;resize:none;outline:none;white-space:pre;overflow:auto;overscroll-behavior:contain}
+  #confirmModal{align-items:center}
+  .confirm-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);width:100%;max-width:340px;padding:16px;touch-action:auto}
+  .confirm-msg{font-size:.92rem;color:var(--text);margin-bottom:14px}
 </style>
 </head>
 <body>
@@ -183,7 +197,11 @@
         </select>
       </div>
 
-      <div class="util mt-0">
+      <div class="util">
+        <button onclick="deletePropFile()">Remove</button>
+        <button onclick="openPropEditor()">Manual Edit</button>
+      </div>
+      <div class="util mt-10">
         <button onclick="savePifLog()">Save PIF Logcat</button>
       </div>
     </details>
@@ -194,6 +212,30 @@
       <summary>Output<span class="chev">▾</span></summary>
       <div id="term"><span class="m">Ready.<br></span></div>
     </details>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="editorModal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <span class="lbl">custom.pif.prop</span>
+      <button class="ic" onclick="closePropEditor()" title="Close">✕</button>
+    </div>
+    <textarea id="propEditorArea" class="modal-area" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"></textarea>
+    <div class="util">
+      <button onclick="closePropEditor()">Cancel</button>
+      <button class="primary" onclick="savePropEditor()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="confirmModal">
+  <div class="confirm-card">
+    <div class="confirm-msg" id="confirmMsg">Delete custom.pif.prop?</div>
+    <div class="util mt-0">
+      <button id="confirmNo">No</button>
+      <button class="primary" id="confirmYes">Yes</button>
+    </div>
   </div>
 </div>
 
@@ -284,7 +326,8 @@ async function refresh(){
   if(has){
     const fl=$("#flags");fl.innerHTML="";
     FLAGS.forEach(k=>{
-      const on=map[k]&&map[k].value==="1";
+      const v=map[k]?map[k].value:"";
+      const on=(k==="spoofVendingFinger"||k==="spoofVendingSdk")?(v!==""&&v!=="0"):(v==="1");
       const el=document.createElement("label");el.className="flag";
       el.innerHTML=`<span>${LABEL[k]}</span><span class="sw"><input type="checkbox" ${on?"checked":""}><i></i></span>`;
       el.querySelector("input").addEventListener("change",e=>setFlag(k,e.target.checked?"1":"0"));
@@ -406,6 +449,42 @@ async function submitCustomUrl() {
   busy(false);
 }
 
+function showConfirm(msg) {
+  return new Promise(resolve => {
+    const modal = $("#confirmModal");
+    $("#confirmMsg").textContent = msg;
+    modal.classList.add("open");
+    document.body.style.overflow = "hidden";
+    const done = (ok) => {
+      modal.classList.remove("open");
+      document.body.style.overflow = "";
+      $("#confirmYes").onclick = null;
+      $("#confirmNo").onclick = null;
+      resolve(ok);
+    };
+    $("#confirmYes").onclick = () => done(true);
+    $("#confirmNo").onclick = () => done(false);
+  });
+}
+
+async function deletePropFile() {
+  if (!(await showConfirm("Delete custom.pif.prop?"))) return;
+  busy(true);
+  $("#outBox").open = true;
+  try {
+    await exec(`rm -f ${CFG}`);
+    log(`Removed ${CFG}`, "m");
+    await killPi();
+    toast("Deleted custom.pif.prop");
+    log(`✓ custom.pif.prop deleted`, "g");
+  } catch(e) {
+    log(e.message, "e");
+    toast("Delete failed");
+  }
+  await refresh();
+  busy(false);
+}
+
 async function savePifLog() {
   busy(true);
   await refresh();
@@ -416,6 +495,101 @@ async function savePifLog() {
     await exec(`logcat -d | grep 'PIF/' >/sdcard/pif.log`);
     log("✓ Logcat saved to /sdcard/pif.log","g");
   } catch(e){log(e.message,"e");}
+  busy(false);
+}
+
+let baseVh = window.innerHeight;
+function scrollToActiveLine() {
+  const ta = $("#propEditorArea");
+  if (!ta || document.activeElement !== ta) return;
+  const pos = ta.selectionStart || 0;
+  const lineIndex = ta.value.slice(0, pos).split("\n").length - 1;
+  const cs = getComputedStyle(ta);
+  const lineHeight = parseFloat(cs.lineHeight) || (parseFloat(cs.fontSize) * 1.45);
+  const targetTop = lineIndex * lineHeight - (ta.clientHeight / 2) + (lineHeight / 2);
+  ta.scrollTop = Math.max(0, targetTop);
+}
+
+function setKbdOpen(open) {
+  const modal = $("#editorModal");
+  if (!modal.classList.contains("open")) return;
+  modal.classList.toggle("kbd", open);
+  if (open) {
+    setTimeout(scrollToActiveLine, 170);
+  }
+}
+
+$("#propEditorArea").addEventListener("focus", () => {
+  baseVh = Math.max(baseVh, window.visualViewport ? window.visualViewport.height : window.innerHeight);
+  setKbdOpen(true);
+});
+
+$("#propEditorArea").addEventListener("blur", () => {
+  setKbdOpen(false);
+});
+
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", () => {
+    const curH = window.visualViewport.height;
+    if (baseVh - curH > 120) {
+      setKbdOpen(true);
+    } else if (baseVh - curH < 60) {
+      if (document.activeElement === $("#propEditorArea")) $("#propEditorArea").blur();
+      setKbdOpen(false);
+    }
+  });
+}
+
+window.addEventListener("resize", () => {
+  const curH = window.innerHeight;
+  if (curH > baseVh) baseVh = curH;
+  if (baseVh - curH > 120) {
+    setKbdOpen(true);
+  } else if (baseVh - curH < 60) {
+    if (document.activeElement === $("#propEditorArea")) $("#propEditorArea").blur();
+    setKbdOpen(false);
+  }
+});
+
+async function openPropEditor() {
+  try {
+    const r = await exec(`cat ${CFG} 2>/dev/null`);
+    $("#propEditorArea").value = r.stdout || "";
+    baseVh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    $("#editorModal").classList.remove("kbd");
+    $("#editorModal").classList.add("open");
+    document.body.style.overflow = "hidden";
+  } catch(e) {
+    log(e.message, "e");
+    toast("Failed to open file");
+  }
+}
+
+function closePropEditor() {
+  if (document.activeElement === $("#propEditorArea")) $("#propEditorArea").blur();
+  $("#editorModal").classList.remove("open", "kbd");
+  document.body.style.overflow = "";
+}
+
+async function savePropEditor() {
+  const text = $("#propEditorArea").value;
+  closePropEditor();
+  busy(true);
+  $("#outBox").open = true;
+  try {
+    await exec(`[ -f ${CFG} ] && cp -f ${CFG} ${CFG}.bak`);
+    log(`Backed up ${CFG} to ${CFG}.bak`, "m");
+    const b64 = btoa(unescape(encodeURIComponent(text)));
+    await exec(`echo "${b64}" | base64 -d > ${CFG}`);
+    log(`Saved manual edits to ${CFG}`, "m");
+    await killPi();
+    toast("Saved custom.pif.prop");
+    log(`✓ custom.pif.prop updated`, "g");
+  } catch(e) {
+    log(e.message, "e");
+    toast("Save failed");
+  }
+  await refresh();
   busy(false);
 }
 
