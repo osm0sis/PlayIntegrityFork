@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
 <meta name="color-scheme" content="dark light" />
 <title>Play Integrity Fork</title>
 <style>
@@ -102,13 +102,12 @@
   @keyframes sp{to{transform:rotate(360deg)}}
 
   /* modal editor */
-  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:flex-start;justify-content:center;padding:max(env(safe-area-inset-top),14px) 16px 16px;z-index:100;overscroll-behavior:contain;touch-action:auto}
+  .modal-backdrop{position:fixed;top:0;left:0;right:0;height:100%;height:100dvh;background:rgba(0,0,0,.75);display:none;align-items:stretch;justify-content:center;padding:max(env(safe-area-inset-top),14px) 16px max(env(safe-area-inset-bottom),16px);z-index:100;overscroll-behavior:contain;touch-action:auto}
   .modal-backdrop.open{display:flex}
-  .modal-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);width:100%;max-width:600px;height:88vh;max-height:88vh;display:flex;flex-direction:column;padding:14px;touch-action:auto;transition:height .15s ease,max-height .15s ease}
-  .modal-backdrop.kbd .modal-card{height:60vh;max-height:60vh}
+  .modal-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);width:100%;max-width:600px;height:100%;max-height:100%;display:flex;flex-direction:column;padding:14px;touch-action:auto}
   .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
   .modal-head .lbl{font-size:.78rem;font-weight:600;font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--text)}
-  .modal-area{user-select:text;flex:1;min-height:120px;width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:11px;padding:10px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;line-height:1.45;resize:none;outline:none;white-space:pre;overflow:auto;overscroll-behavior:contain}
+  .modal-area{user-select:text;flex:1;min-height:0;width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:11px;padding:10px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;line-height:1.45;resize:none;outline:none;white-space:pre;overflow:auto;overscroll-behavior:contain}
   #confirmModal{align-items:center}
   .confirm-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);width:100%;max-width:340px;padding:16px;touch-action:auto}
   .confirm-msg{font-size:.92rem;color:var(--text);margin-bottom:14px}
@@ -499,7 +498,6 @@ async function savePifLog() {
   busy(false);
 }
 
-let baseVh = window.innerHeight;
 function scrollToActiveLine() {
   const ta = $("#propEditorArea");
   if (!ta || document.activeElement !== ta) return;
@@ -511,53 +509,69 @@ function scrollToActiveLine() {
   ta.scrollTop = Math.max(0, targetTop);
 }
 
-function setKbdOpen(open) {
+let editorBaseH = 0, editorBaseW = 0, editorKbdTimer = 0, editorKbdFallback = false, editorBtnDown = false;
+
+function syncEditorViewport() {
   const modal = $("#editorModal");
   if (!modal.classList.contains("open")) return;
-  modal.classList.toggle("kbd", open);
-  if (open) {
-    setTimeout(scrollToActiveLine, 170);
+  const vv = window.visualViewport;
+  const curW = vv ? vv.width : window.innerWidth;
+  const curH = vv ? vv.height : window.innerHeight;
+  if (Math.abs(curW - editorBaseW) > 50 || curH > editorBaseH) {
+    editorBaseW = curW;
+    editorBaseH = curH;
+  }
+  const hostResized = editorBaseH - curH > 100;
+  if (hostResized) {
+    clearTimeout(editorKbdTimer);
+    editorKbdFallback = false;
+  }
+  const useFallback = editorKbdFallback && !hostResized;
+  const targetH = Math.round(editorBaseH * (curW > curH ? 0.45 : 0.58));
+  modal.style.top = (vv ? vv.offsetTop : 0) + "px";
+  modal.style.height = curH + "px";
+  modal.style.paddingBottom = useFallback ? Math.max(16, curH - targetH + 16) + "px" : "";
+  if (document.activeElement === $("#propEditorArea")) {
+    requestAnimationFrame(scrollToActiveLine);
   }
 }
+
+$("#editorModal").addEventListener("pointerdown", e => {
+  if (e.target.closest("button")) editorBtnDown = true;
+}, true);
+window.addEventListener("pointerup", () => { editorBtnDown = false; }, true);
+window.addEventListener("pointercancel", () => { editorBtnDown = false; }, true);
 
 $("#propEditorArea").addEventListener("focus", () => {
-  baseVh = Math.max(baseVh, window.visualViewport ? window.visualViewport.height : window.innerHeight);
-  setKbdOpen(true);
+  clearTimeout(editorKbdTimer);
+  editorKbdTimer = setTimeout(() => { editorKbdFallback = true; syncEditorViewport(); }, 300);
 });
-
 $("#propEditorArea").addEventListener("blur", () => {
-  setKbdOpen(false);
+  clearTimeout(editorKbdTimer);
+  editorKbdTimer = setTimeout(() => {
+    if (editorBtnDown || !$("#editorModal").classList.contains("open")) return;
+    editorKbdFallback = false;
+    syncEditorViewport();
+  }, 200);
 });
-
 if (window.visualViewport) {
-  window.visualViewport.addEventListener("resize", () => {
-    const curH = window.visualViewport.height;
-    if (baseVh - curH > 120) {
-      setKbdOpen(true);
-    } else if (baseVh - curH < 60) {
-      setKbdOpen(false);
-    }
-  });
+  window.visualViewport.addEventListener("resize", syncEditorViewport);
+  window.visualViewport.addEventListener("scroll", syncEditorViewport);
 }
-
-window.addEventListener("resize", () => {
-  const curH = window.innerHeight;
-  if (curH > baseVh) baseVh = curH;
-  if (baseVh - curH > 120) {
-    setKbdOpen(true);
-  } else if (baseVh - curH < 60) {
-    setKbdOpen(false);
-  }
-});
+window.addEventListener("resize", syncEditorViewport);
 
 async function openPropEditor() {
   try {
     const r = await exec(`cat ${CFG} 2>/dev/null`);
     $("#propEditorArea").value = r.stdout || "";
-    baseVh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    $("#editorModal").classList.remove("kbd");
+    const vv = window.visualViewport;
+    editorBaseW = vv ? vv.width : window.innerWidth;
+    editorBaseH = vv ? vv.height : window.innerHeight;
+    editorKbdFallback = false;
+    editorBtnDown = false;
     $("#editorModal").classList.add("open");
     document.body.style.overflow = "hidden";
+    syncEditorViewport();
   } catch(e) {
     log(e.message, "e");
     toast("Failed to open file");
@@ -565,7 +579,14 @@ async function openPropEditor() {
 }
 
 function closePropEditor() {
-  $("#editorModal").classList.remove("open", "kbd");
+  clearTimeout(editorKbdTimer);
+  editorKbdFallback = false;
+  editorBtnDown = false;
+  const modal = $("#editorModal");
+  modal.classList.remove("open");
+  modal.style.top = "";
+  modal.style.height = "";
+  modal.style.paddingBottom = "";
   document.body.style.overflow = "";
 }
 
