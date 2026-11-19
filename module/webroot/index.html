@@ -102,13 +102,13 @@
   @keyframes sp{to{transform:rotate(360deg)}}
 
   /* modal editor */
-  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:flex-start;justify-content:center;padding:max(env(safe-area-inset-top),14px) 16px 16px;z-index:100;overscroll-behavior:contain;touch-action:none}
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:flex-start;justify-content:center;padding:max(env(safe-area-inset-top),14px) 16px 16px;z-index:100;overscroll-behavior:contain;touch-action:auto}
   .modal-backdrop.open{display:flex}
   .modal-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);width:100%;max-width:600px;height:88vh;max-height:88vh;display:flex;flex-direction:column;padding:14px;touch-action:auto;transition:height .15s ease,max-height .15s ease}
-  .modal-backdrop.kbd .modal-card{height:48vh;max-height:48vh}
+  .modal-backdrop.kbd .modal-card{height:60vh;max-height:60vh}
   .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
   .modal-head .lbl{font-size:.78rem;font-weight:600;font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--text)}
-  .modal-area{flex:1;min-height:120px;width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:11px;padding:10px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;line-height:1.45;resize:none;outline:none;white-space:pre;overflow:auto;overscroll-behavior:contain}
+  .modal-area{user-select:text;flex:1;min-height:120px;width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:11px;padding:10px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;line-height:1.45;resize:none;outline:none;white-space:pre;overflow:auto;overscroll-behavior:contain}
   #confirmModal{align-items:center}
   .confirm-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);width:100%;max-width:340px;padding:16px;touch-action:auto}
   .confirm-msg{font-size:.92rem;color:var(--text);margin-bottom:14px}
@@ -197,7 +197,7 @@
         </select>
       </div>
 
-      <div class="util">
+      <div class="util mt-0">
         <button onclick="deletePropFile()">Remove</button>
         <button onclick="openPropEditor()">Manual Edit</button>
       </div>
@@ -327,6 +327,7 @@ async function refresh(){
     const fl=$("#flags");fl.innerHTML="";
     FLAGS.forEach(k=>{
       const v=map[k]?map[k].value:"";
+      // Show advanced custom spoofVendingFinger and spoofVendingSdk values as enabled
       const on=(k==="spoofVendingFinger"||k==="spoofVendingSdk")?(v!==""&&v!=="0"):(v==="1");
       const el=document.createElement("label");el.className="flag";
       el.innerHTML=`<span>${LABEL[k]}</span><span class="sw"><input type="checkbox" ${on?"checked":""}><i></i></span>`;
@@ -534,7 +535,6 @@ if (window.visualViewport) {
     if (baseVh - curH > 120) {
       setKbdOpen(true);
     } else if (baseVh - curH < 60) {
-      if (document.activeElement === $("#propEditorArea")) $("#propEditorArea").blur();
       setKbdOpen(false);
     }
   });
@@ -546,7 +546,6 @@ window.addEventListener("resize", () => {
   if (baseVh - curH > 120) {
     setKbdOpen(true);
   } else if (baseVh - curH < 60) {
-    if (document.activeElement === $("#propEditorArea")) $("#propEditorArea").blur();
     setKbdOpen(false);
   }
 });
@@ -566,13 +565,14 @@ async function openPropEditor() {
 }
 
 function closePropEditor() {
-  if (document.activeElement === $("#propEditorArea")) $("#propEditorArea").blur();
   $("#editorModal").classList.remove("open", "kbd");
   document.body.style.overflow = "";
 }
 
 async function savePropEditor() {
-  const text = $("#propEditorArea").value;
+  let text = $("#propEditorArea").value;
+  // Ensure the text ends with a newline character
+  if (text && !text.endsWith("\n")) text += "\n";
   closePropEditor();
   busy(true);
   $("#outBox").open = true;
