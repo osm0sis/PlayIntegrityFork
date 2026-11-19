@@ -527,7 +527,7 @@ function syncEditorViewport() {
     editorKbdFallback = false;
   }
   const useFallback = editorKbdFallback && !hostResized;
-  const targetH = Math.round(editorBaseH * (curW > curH ? 0.45 : 0.58));
+  const targetH = Math.round(editorBaseH * (curW > curH ? 0.45 : 0.65));
   modal.style.top = (vv ? vv.offsetTop : 0) + "px";
   modal.style.height = curH + "px";
   modal.style.paddingBottom = useFallback ? Math.max(16, curH - targetH + 16) + "px" : "";
