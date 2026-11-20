@@ -97,6 +97,13 @@
     font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.75rem;line-height:1.5;white-space:pre-wrap;
     word-break:break-word;max-height:200px;overflow:auto;color:var(--accent-soft)}
   #term .e{color:var(--err)} #term .g{color:var(--ok)} #term .w{color:var(--warn)} #term .m{color:var(--muted)}
+  .out-ctrl{display:flex;align-items:center;gap:6px}
+  #termExpand{display:none;background:none;border:none;color:var(--muted);font-size:1rem;line-height:1;cursor:pointer;padding:2px 6px;border-radius:8px}
+  #termExpand:active{background:var(--surface2)}
+  #outBox[open] #termExpand{display:inline-block}
+  #outCard.term-fs{position:fixed;inset:0;z-index:90;border-radius:0;border:none;padding:max(env(safe-area-inset-top),14px) 16px max(env(safe-area-inset-bottom),16px)}
+  #outCard.term-fs #term{position:fixed;top:calc(max(env(safe-area-inset-top),14px) + 42px);left:16px;right:16px;bottom:max(env(safe-area-inset-bottom),16px);margin:0;max-height:none;overflow:auto;overscroll-behavior:contain;touch-action:auto;user-select:text;z-index:91}
+  #outCard.term-fs .chev{display:none}
   .spin{display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-right-color:transparent;
     border-radius:50%;animation:sp .7s linear infinite;vertical-align:-1px;margin-left:6px}
   @keyframes sp{to{transform:rotate(360deg)}}
@@ -206,9 +213,9 @@
     </details>
   </div>
 
-  <div class="card">
+  <div class="card" id="outCard">
     <details id="outBox">
-      <summary>Output<span class="chev">▾</span></summary>
+      <summary>Output<span class="out-ctrl"><button type="button" id="termExpand" title="Fullscreen">⤢</button><span class="chev">▾</span></span></summary>
       <div id="term"><span class="m">Ready.<br></span></div>
     </details>
   </div>
@@ -252,7 +259,7 @@ const LABEL={spoofBuild:"Spoof Build",spoofProps:"Spoof Props",spoofProvider:"Sp
 const $=s=>document.querySelector(s);
 const term=$("#term");
 
-function log(m,c){const s=document.createElement("span");if(c)s.className=c;s.textContent=m+"\n";term.appendChild(s);term.scrollTop=term.scrollHeight;}
+function log(m,c){const atB=term.scrollHeight-term.scrollTop-term.clientHeight<40;const s=document.createElement("span");if(c)s.className=c;s.textContent=m+"\n";term.appendChild(s);if(atB)term.scrollTop=term.scrollHeight;}
 
 function exec(cmd,opts){
   return new Promise((res,rej)=>{
@@ -619,6 +626,20 @@ $("#segRandom").onclick=()=>setMode("random");
 $("#generate").onclick=async()=>{const rand=$("#segRandom").classList.contains("on");await autoPif(rand?"random":"match");};
 $("#killPi").onclick=async()=>{busy(true);await refresh();$("#outBox").open=true;await killPi();busy(false);};
 $("#refresh").onclick=refresh;
+function setTermFs(fs){
+  $("#outCard").classList.toggle("term-fs",fs);
+  $("#termExpand").textContent=fs?"✕":"⤢";
+  document.body.style.overflow=fs?"hidden":"";
+  if(fs){
+    $("#outBox").open=true;
+    requestAnimationFrame(()=>{
+      term.style.top=Math.ceil($("#outBox summary").getBoundingClientRect().bottom+12)+"px";
+      term.scrollTop=term.scrollHeight;
+    });
+  }else{term.style.top="";}
+}
+$("#termExpand").onclick=(e)=>{e.preventDefault();e.stopPropagation();setTermFs(!$("#outCard").classList.contains("term-fs"));};
+$("#outBox").addEventListener("toggle",()=>{if(!$("#outBox").open&&$("#outCard").classList.contains("term-fs"))setTermFs(false);});
 $("#verboseSelect").onchange = (e) => setFlag("verboseLogs", e.target.value);
 
 $("#skipAddProp").onchange = async (e) => {
