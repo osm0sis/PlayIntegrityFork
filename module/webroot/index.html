@@ -62,7 +62,7 @@
     font-size:.84rem;font-weight:600;padding:10px;border-radius:11px;cursor:pointer}
   .util button:active{transform:scale(.98)}
   .util button.primary{background:var(--accent);color:#03121f;border-color:var(--accent)}
-  button:disabled{opacity:.5;pointer-events:none}
+  button:disabled,select:disabled,input:disabled,input:disabled+i{opacity:.5;pointer-events:none}
 
   /* import */
   #filePicker{display:none}
@@ -272,7 +272,8 @@ function exec(cmd,opts){
 
 function toast(m){try{if(typeof ksu!=="undefined"&&ksu.toast)ksu.toast(m);}catch(e){}}
 
-function busy(b){document.querySelectorAll("button").forEach(x=>x.disabled=b);$("#refresh").disabled=false;}
+let isBusy=false;
+function busy(b){isBusy=b;document.querySelectorAll("button,input,select").forEach(x=>x.disabled=b);$("#refresh").disabled=false;}
 
 async function readConfig(){
   const r=await exec(`cat ${CFG} 2>/dev/null`);const map={};
@@ -336,7 +337,7 @@ async function refresh(){
       // Show advanced custom spoofVendingFinger and spoofVendingSdk values as enabled
       const on=(k==="spoofVendingFinger"||k==="spoofVendingSdk")?(v!==""&&v!=="0"):(v==="1");
       const el=document.createElement("label");el.className="flag";
-      el.innerHTML=`<span>${LABEL[k]}</span><span class="sw"><input type="checkbox" ${on?"checked":""}><i></i></span>`;
+      el.innerHTML=`<span>${LABEL[k]}</span><span class="sw"><input type="checkbox" ${on?"checked":""}${isBusy?" disabled":""}><i></i></span>`;
       el.querySelector("input").addEventListener("change",e=>setFlag(k,e.target.checked?"1":"0"));
       fl.appendChild(el);
     });
