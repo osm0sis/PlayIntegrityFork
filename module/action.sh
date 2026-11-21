@@ -3,13 +3,15 @@ MODPATH="${0%/*}"
 # support launching WebUI from Magisk app then exit early
 if [ "$MMRL" != "true" ] && [[ -n "$MAGISKTMP" || "$TMPDIR" = *"magisk"* ]]; then
     if pm path io.github.a13e300.ksuwebui >/dev/null 2>&1; then
-        echo "- Launching WebUI in KSUWebUIStandalone ..."
+        echo "- Launching WebUI in KsuWebUIStandalone ..."
         am start -n "io.github.a13e300.ksuwebui/.WebUIActivity" -e id "playintegrityfork"
         exit 0
     fi
     if pm path com.dergoogler.mmrl.wx >/dev/null 2>&1; then
         echo "- Launching WebUI in WebUI X ..."
-        am start -n "com.dergoogler.mmrl.wx/.ui.activity.webui.WebUIActivity" -e MOD_ID "playintegrityfork"
+        # v608 intent || v660 intent
+        am start -n "com.dergoogler.mmrl.wx/.ui.webui.WebUIActivity" -e MODULE_ID "playintegrityfork" \
+            || am start -n "com.dergoogler.mmrl.wx/.ui.webui.activity.NewProcessWebUIActivity" -e MODULE_ID "playintegrityfork"
         exit 0
     fi
 fi
