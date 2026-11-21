@@ -8,13 +8,13 @@
 
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, "PIF/Native", __VA_ARGS__)
 
-#define DEX_FILE_PATH "/data/adb/modules/playintegrityfix/classes.dex"
+#define DEX_FILE_PATH "/data/adb/modules/playintegrityfork/classes.dex"
 
-#define PROP_FILE_PATH "/data/adb/modules/playintegrityfix/pif.prop"
-#define CUSTOM_PROP_FILE_PATH "/data/adb/modules/playintegrityfix/custom.pif.prop"
+#define PROP_FILE_PATH "/data/adb/modules/playintegrityfork/pif.prop"
+#define CUSTOM_PROP_FILE_PATH "/data/adb/modules/playintegrityfork/custom.pif.prop"
 
-#define JSON_FILE_PATH "/data/adb/modules/playintegrityfix/pif.json"
-#define CUSTOM_JSON_FILE_PATH "/data/adb/modules/playintegrityfix/custom.pif.json"
+#define JSON_FILE_PATH "/data/adb/modules/playintegrityfork/pif.json"
+#define CUSTOM_JSON_FILE_PATH "/data/adb/modules/playintegrityfork/custom.pif.json"
 
 #define VENDING_PACKAGE "com.android.vending"
 #define DROIDGUARD_PACKAGE "com.google.android.gms.unstable"
