@@ -34,7 +34,7 @@ for FILE in custom.app_replace_list.txt custom.pif.json custom.pif.prop skipdelp
 done
 
 # Support upgrading from previous module ID
-if [ -f "/data/adb/modules/playintegrityfix/migrate.sh" ]; then
+if [ -f "/data/adb/modules/playintegrityfix/autopif4.sh" ]; then
     ui_print "! Migrating configuration to new playintegrityfork module ID"
     if [ -d /data/adb/modules/playintegrityfix/system ]; then
         ui_print "- Restoring disabled ROM apps configuration"
