@@ -3,6 +3,10 @@ if [ -d /data/adb/modules/safetynet-fix ]; then
     touch /data/adb/modules/safetynet-fix/remove
     ui_print "! Universal SafetyNet Fix (USNF) module will be removed on next reboot"
 fi
+if [ -d /data/adb/modules/playintegrityfix ]; then
+    touch /data/adb/modules/playintegrityfix/remove
+    ui_print "! Play Integrity Fix (PIF) module will be removed on next reboot"
+fi
 
 # Replace/hide conflicting custom ROM injection app folders/files to disable them
 MAGISK_WHITEOUT=false

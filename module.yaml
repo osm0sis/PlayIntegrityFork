@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/KernelSU-Modules/tools/main/schemas/module.schema.json
+schemaVersion: 1
+id: playintegrityfork
+name: Play Integrity Fork
+summary: Fix Play Integrity verdicts and Google Wallet/RCS on Android 7+
+description: README.md
+license: GPL-3.0
+homepage: https://github.com/osm0sis/PlayIntegrityFork
+support: https://xdaforums.com/t/module-play-integrity-fork-pifork.4761120/
+tags: [play, integrity, rcs, wallet, pif, pifork]
+icon: module/webroot/icon.svg
+
+authors:
+  - name: osm0sis
+    url: https://github.com/osm0sis
+
+compatibility:
+  androidMinApi: 24
+  architectures: [arm64-v8a, armeabi-v7a]
+
+release:
+  assetPattern: "PlayIntegrityFork*.zip"
