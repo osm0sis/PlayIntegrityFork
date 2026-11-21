@@ -17,7 +17,7 @@ To use this module you must have one of the following (latest versions):
 - [KernelSU Next](https://github.com/KernelSU-Next/KernelSU-Next) with [Zygisk Next](https://github.com/Dr-TSNG/ZygiskNext) or [ReZygisk](https://github.com/PerformanC/ReZygisk) or [NeoZygisk](https://github.com/JingMatrix/NeoZygisk) module installed
 - [APatch](https://github.com/bmax121/APatch) with [Zygisk Next](https://github.com/Dr-TSNG/ZygiskNext) or [ReZygisk](https://github.com/PerformanC/ReZygisk) or [NeoZygisk](https://github.com/JingMatrix/NeoZygisk) module installed
 
-Note: [SukiSU Ultra](https://github.com/SukiSU-Ultra/SukiSU-Ultra) limits Action button script execution to 10 seconds so is not fully compatible and cannot be recommended.
+Note: [SukiSU Nova](https://github.com/SukiSU-Nova/SukiSU-Nova) limits Action button script execution to 10 seconds so is not fully compatible and cannot be recommended.
 
 ## About module
 
