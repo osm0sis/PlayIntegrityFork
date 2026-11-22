@@ -219,7 +219,7 @@ if [ -f "$MIGRATE" ]; then
     item "Retaining existing configuration ...";
   fi;
   [ -d /data/adb/tricky_store -o -d /data/adb/teesim -o -d /data/adb/omk ] && unset PATCH_COMMENT;
-  item "Converting pif.prop to custom.pif.prop with migrate.sh:";
+  item "Converting pif.prop to custom.pif.prop ...";
   rm -f pif.json custom.pif.json custom.pif.prop;
   sh $MIGRATE -i pif.prop;
   grep_config() {
