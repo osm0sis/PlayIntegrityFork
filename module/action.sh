@@ -28,8 +28,8 @@ sh $MODPATH/autopif4.sh $MATCHFLAG || exit 1
 
 echo -e "\nDone!"
 
-# warn since KernelSU/APatch's implementation automatically closes if successful
-if [ "$KSU" = "true" -o "$APATCH" = "true" ] && [ "$KSU_NEXT" != "true" ] && [ "$KSU_SUKISU" != "true" ] && [ "$BAKASU" != "true" ] && [ "$WKSU" != "true" ] && [ "$MMRL" != "true" ]; then
+# warn since APatch's implementation automatically closes if successful
+if [ "$APATCH" = "true" ] && [ "$MMRL" != "true" ]; then
     echo -e "\nClosing dialog in 20 seconds ..."
     sleep 20
 fi
